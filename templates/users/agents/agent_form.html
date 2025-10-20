@@ -1,0 +1,134 @@
+{% extends 'users/base.html' %}
+
+{% block title %}{{ title }} - AI Agent Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'agents:agent_list' %}" class="text-blue-600 hover:text-blue-800 inline-flex items-center text-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Agents
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h1 class="text-2xl font-bold mb-6">{{ title }}</h1>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <!-- Name -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Agent Name *
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Give your agent a descriptive name</p>
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">What does this agent do?</p>
+            </div>
+            
+            <!-- Use Case -->
+            <div>
+                <label for="{{ form.use_case.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Use Case *
+                </label>
+                {{ form.use_case }}
+                {% if form.use_case.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.use_case.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Primary purpose of this agent</p>
+            </div>
+            
+            <!-- System Prompt -->
+            <div>
+                <label for="{{ form.prompt_template.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    System Prompt
+                </label>
+                {{ form.prompt_template }}
+                {% if form.prompt_template.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.prompt_template.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">
+                    Instructions for how the agent should behave. Example: "You are a helpful customer support agent. Be friendly and professional."
+                </p>
+            </div>
+            
+            <!-- Active Status (only show on edit) -->
+            {% if form.is_active %}
+            <div class="flex items-start">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                    Agent is active and available for use
+                </label>
+            </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <a href="{% url 'agents:agent_list' %}" 
+                   class="text-gray-600 hover:text-gray-800 font-medium">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                    {{ button_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Help Section -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 Tips for Creating Effective Agents</h3>
+        <ul class="space-y-2 text-sm text-blue-800">
+            <li class="flex items-start">
+                <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Be specific in your system prompt - tell the agent exactly how to behave</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Choose the right use case to enable specific tools and features</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Test your agent after creation and refine the prompt based on results</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>You can clone and modify agents later to experiment with different configurations</span>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

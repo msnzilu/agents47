@@ -1,0 +1,89 @@
+{% extends 'admin/admin.html' %}
+
+{% block title %}Agents - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Agent Management</h1>
+        <div class="text-sm text-gray-600">Total Agents: <span class="font-semibold">{{ agents.count }}</span></div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="flex gap-4">
+            <input 
+                type="text" 
+                name="search" 
+                placeholder="Search by agent name..." 
+                value="{{ request.GET.search }}"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                <option value="">All Status</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Agents Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Agent Name</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Owner</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Use Case</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Model</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Created</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for agent in agents %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ agent.name }}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <a href="{% url 'myadmin:user_detail' agent.user.id %}" class="text-blue-600 hover:text-blue-900">
+                            {{ agent.user.get_display_name }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-sm">{{ agent.use_case|default:"N/A" }}</td>
+                    <td class="px-6 py-4 text-sm">{{ agent.model|default:"N/A" }}</td>
+                    <td class="px-6 py-4">
+                        {% if agent.is_active %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">Active</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm">{{ agent.created_at|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 text-sm space-x-2">
+                        <a href="{% url 'myadmin:agent_detail' agent.id %}" class="text-blue-600 hover:text-blue-900">
+                            View
+                        </a>
+                        <a href="{% url 'myadmin:agent_toggle_active' agent.id %}" class="text-orange-600 hover:text-orange-900">
+                            {% if agent.is_active %}Deactivate{% else %}Activate{% endif %}
+                        </a>
+                        <a href="{% url 'myadmin:agent_delete' agent.id %}" class="text-red-600 hover:text-red-900">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        No agents found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

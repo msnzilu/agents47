@@ -1,0 +1,115 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Home - AI Agent Platform{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <!-- Hero Section -->
+    <div class="py-16">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+            Build Intelligent AI Agents
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Create, customize, and deploy AI agents for customer support, research, automation, and more.
+        </p>
+        
+        {% if not user.is_authenticated %}
+        <div class="flex justify-center space-x-4">
+            <a href="{% url 'users:register' %}" 
+               class="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-blue-700 transition">
+                Get Started Free
+            </a>
+            <a href="{% url 'users:login' %}" 
+               class="bg-white text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg text-lg font-medium hover:bg-blue-50 transition">
+                Sign In
+            </a>
+        </div>
+        {% else %}
+        <div class="flex justify-center space-x-4">
+            <a href="{% url 'users:dashboard' %}" 
+               class="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-blue-700 transition">
+                Go to Dashboard
+            </a>
+            <a href="{% url 'agents:agent_create' %}" 
+               class="bg-white text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg text-lg font-medium hover:bg-blue-50 transition">
+                Create New Agent
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Features Grid -->
+    <div class="grid md:grid-cols-3 gap-8 mt-16 text-left">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">💬</div>
+            <h3 class="text-xl font-semibold mb-2">Customer Support</h3>
+            <p class="text-gray-600">Handle customer queries with intelligent, context-aware agents that learn from your knowledge base.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">🔍</div>
+            <h3 class="text-xl font-semibold mb-2">Research & Analysis</h3>
+            <p class="text-gray-600">Summarize web data, extract insights, and generate comprehensive research reports automatically.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">⚡</div>
+            <h3 class="text-xl font-semibold mb-2">Workflow Automation</h3>
+            <p class="text-gray-600">Automate repetitive tasks with smart agents that handle emails, scheduling, and integrations.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">📅</div>
+            <h3 class="text-xl font-semibold mb-2">Smart Scheduling</h3>
+            <p class="text-gray-600">Manage calendars, book meetings, and send reminders with AI-powered scheduling assistants.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">📚</div>
+            <h3 class="text-xl font-semibold mb-2">Knowledge Management</h3>
+            <p class="text-gray-600">Upload documents and let agents answer questions from your internal knowledge base.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div class="text-3xl mb-4">📈</div>
+            <h3 class="text-xl font-semibold mb-2">Sales & Lead Gen</h3>
+            <p class="text-gray-600">Qualify leads, automate outreach, and manage follow-ups with intelligent sales agents.</p>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="mt-24 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 mb-12">How It Works</h2>
+        <div class="grid md:grid-cols-4 gap-6">
+            <div>
+                <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-blue-600 font-bold">1</span>
+                </div>
+                <h4 class="font-semibold mb-2">Create Agent</h4>
+                <p class="text-gray-600 text-sm">Choose a use case and configure your agent</p>
+            </div>
+            <div>
+                <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-blue-600 font-bold">2</span>
+                </div>
+                <h4 class="font-semibold mb-2">Add Knowledge</h4>
+                <p class="text-gray-600 text-sm">Upload documents and train with your data</p>
+            </div>
+            <div>
+                <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-blue-600 font-bold">3</span>
+                </div>
+                <h4 class="font-semibold mb-2">Customize</h4>
+                <p class="text-gray-600 text-sm">Fine-tune prompts and connect integrations</p>
+            </div>
+            <div>
+                <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-blue-600 font-bold">4</span>
+                </div>
+                <h4 class="font-semibold mb-2">Deploy</h4>
+                <p class="text-gray-600 text-sm">Embed on your site or use via API</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

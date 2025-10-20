@@ -1,0 +1,91 @@
+{% extends 'admin/admin.html' %}
+
+{% block title %}Users - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+        <div class="text-sm text-gray-600">Total Users: <span class="font-semibold">{{ users.count }}</span></div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="flex gap-4">
+            <input 
+                type="text" 
+                name="search" 
+                placeholder="Search by name or email..." 
+                value="{{ request.GET.search }}"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                <option value="">All Status</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Staff</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Agents</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Joined</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for user in users %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ user.get_display_name }}</td>
+                    <td class="px-6 py-4 text-sm">{{ user.email }}</td>
+                    <td class="px-6 py-4">
+                        {% if user.is_active %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">Active</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if user.is_staff %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">Staff</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium">User</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm">{{ user.agent_count_annotated }}</td>
+                    <td class="px-6 py-4 text-sm">{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 text-sm space-x-2">
+                        <a href="{% url 'myadmin:user_detail' user.id %}" class="text-blue-600 hover:text-blue-900">
+                            View
+                        </a>
+                        <a href="{% url 'myadmin:user_toggle_active' user.id %}" class="text-orange-600 hover:text-orange-900">
+                            {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                        </a>
+                        <a href="{% url 'myadmin:user_delete' user.id %}" class="text-red-600 hover:text-red-900">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        No users found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

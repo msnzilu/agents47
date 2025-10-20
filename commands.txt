@@ -1,0 +1,3 @@
+docker-compose exec web pytest
+
+docker exec -it aiagentplatform-db-1 psql -U anexx -d ai_agents_db -c "CREATE EXTENSION IF NOT EXISTS vector;"

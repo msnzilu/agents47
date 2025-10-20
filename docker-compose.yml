@@ -1,0 +1,67 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.db
+    environment:
+      POSTGRES_DB: ai_agent_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DJANGO_SETTINGS_MODULE=aiagentplatform.settings
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # celery:
+  #   build: .
+  #   command: celery -A ai_agent_platform worker -l info
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - DEBUG=True
+  #     - SECRET_KEY=dev-secret-key-change-in-production
+  #   depends_on:
+  #     - db
+  #     - redis
+
+volumes:
+  postgres_data:

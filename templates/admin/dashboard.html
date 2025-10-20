@@ -1,0 +1,127 @@
+{% extends 'admin/admin.html' %}
+
+{% block title %}Dashboard - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_users }}</p>
+                </div>
+                <div class="bg-blue-100 rounded-full p-3">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active Users</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ active_users }}</p>
+                </div>
+                <div class="bg-green-100 rounded-full p-3">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Agents</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_agents }}</p>
+                </div>
+                <div class="bg-purple-100 rounded-full p-3">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active Agents</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ active_agents }}</p>
+                </div>
+                <div class="bg-orange-100 rounded-full p-3">
+                    <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Users -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Recent Users</h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for user in recent_users %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ user.get_display_name }}</p>
+                            <p class="text-sm text-gray-600">{{ user.email }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">{{ user.date_joined|date:"M d, Y" }}</p>
+                            <a href="{% url 'myadmin:user_detail' user.id %}" class="text-sm text-blue-600 hover:text-blue-900">View</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No users yet</p>
+                    {% endfor %}
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'myadmin:user_list' %}" class="text-blue-600 hover:text-blue-900">View all users &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Agents -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Recent Agents</h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for agent in recent_agents %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ agent.name }}</p>
+                            <p class="text-sm text-gray-600">by {{ agent.user.get_display_name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">{{ agent.created_at|date:"M d, Y" }}</p>
+                            <a href="{% url 'myadmin:agent_detail' agent.id %}" class="text-sm text-blue-600 hover:text-blue-900">View</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No agents yet</p>
+                    {% endfor %}
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'myadmin:agent_list' %}" class="text-blue-600 hover:text-blue-900">View all agents &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

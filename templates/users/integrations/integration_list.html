@@ -1,0 +1,137 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Integrations - {{ agent.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Integrations</h1>
+                <p class="mt-2 text-sm text-gray-600">
+                    Connect {{ agent.name }} to external services and platforms
+                </p>
+            </div>
+            <a href="{% url 'integrations:integration_create' agent.id %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Integration
+            </a>
+        </div>
+    </div>
+
+    <!-- Integrations Grid -->
+    {% if integrations %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for integration in integrations %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition">
+            <div class="p-6">
+                <!-- Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                            {{ integration.name }}
+                        </h3>
+                        <p class="text-sm text-gray-500">
+                            {{ integration.get_integration_type_display }}
+                        </p>
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if integration.status == 'active' %}bg-green-100 text-green-800
+                        {% elif integration.status == 'error' %}bg-red-100 text-red-800
+                        {% elif integration.status == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {% if integration.is_active %}
+                            <span class="w-2 h-2 rounded-full mr-1.5
+                                {% if integration.status == 'active' %}bg-green-500
+                                {% elif integration.status == 'error' %}bg-red-500
+                                {% elif integration.status == 'pending' %}bg-yellow-500
+                                {% else %}bg-gray-500{% endif %}"></span>
+                        {% endif %}
+                        {{ integration.get_status_display }}
+                    </span>
+                </div>
+
+                <!-- Details -->
+                <div class="space-y-2 mb-4">
+                    {% if integration.webhook_url %}
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                        </svg>
+                        Webhook configured
+                    </div>
+                    {% endif %}
+                    
+                    {% if integration.last_triggered_at %}
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Last used {{ integration.last_triggered_at|timesince }} ago
+                    </div>
+                    {% else %}
+                    <div class="flex items-center text-sm text-gray-500 italic">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Never triggered
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <a href="{% url 'integrations:integration_detail' agent.id integration.id %}" 
+                       class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        View Details →
+                    </a>
+                    
+                    <div class="flex items-center space-x-2">
+                        <form method="post" action="{% url 'integrations:integration_toggle_active' agent.id integration.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="text-sm {% if integration.is_active %}text-gray-600 hover:text-gray-800{% else %}text-green-600 hover:text-green-800{% endif %}"
+                                    title="{% if integration.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                {% if integration.is_active %}
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                {% else %}
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No integrations yet</h3>
+        <p class="text-gray-600 mb-6">Connect your agent to external services to extend its capabilities.</p>
+        <a href="{% url 'integrations:integration_create' agent.id %}" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Create Your First Integration
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

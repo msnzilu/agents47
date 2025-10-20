@@ -1,0 +1,448 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Chat with {{ agent.name }} - AI Agent Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+    }
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background-color: #9CA3AF;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.7;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
+    }
+    .message-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <!-- Sidebar: Conversations List -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h2 class="text-lg font-semibold mb-3">Conversations</h2>
+                <div class="space-y-2">
+                    <a href="?conversation=new" 
+                       class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                        + New Conversation
+                    </a>
+                    {% for conv in user_conversations %}
+                    <a href="?conversation={{ conv.id }}" 
+                       class="block p-3 rounded-lg hover:bg-gray-50 transition {% if conv.id == conversation.id %}bg-blue-50 border-l-4 border-blue-600{% endif %}">
+                        <div class="text-sm font-medium text-gray-900 truncate">{{ conv.title }}</div>
+                        <div class="text-xs text-gray-500">{{ conv.updated_at|timesince }} ago</div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="lg:col-span-3">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'agents:agent_detail' agent.id %}" 
+                           class="text-blue-600 hover:text-blue-800">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </a>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">{{ agent.name }}</h1>
+                            <p class="text-sm text-gray-500">{{ agent.description|truncatewords:10 }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span id="connection-status" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                            <span id="status-dot" class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>
+                            <span id="status-text">Connecting...</span>
+                        </span>
+                        <button onclick="clearMessages()" class="text-gray-500 hover:text-gray-700" title="Clear messages">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col" style="height: calc(100vh - 280px);">
+                <!-- Messages Area -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-4" id="messages-container">
+                    {% if messages.object_list %}
+                        {% for message in messages.object_list reversed %}
+                        <div class="message-item flex {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}" data-message-id="{{ message.id }}">
+                            <div class="max-w-[70%]">
+                                <div class="{% if message.user == request.user %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-900{% endif %} rounded-lg px-4 py-3">
+                                    <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+                                </div>
+                                <div class="flex items-center mt-1 {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}">
+                                    <p class="text-xs text-gray-500">
+                                        {{ message.created_at|date:"g:i A" }}
+                                    </p>
+                                    {% if message.user == request.user %}
+                                    <span class="ml-2 text-xs text-gray-400" id="status-{{ message.id }}">
+                                        ✓
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div id="empty-state" class="text-center text-gray-500 py-12">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <p class="text-lg font-medium">Start a conversation</p>
+                            <p class="text-sm mt-1">Send a message to begin chatting with {{ agent.name }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Typing Indicator (hidden by default) -->
+                    <div id="typing-indicator" class="hidden flex justify-start">
+                        <div class="bg-gray-100 rounded-lg px-4 py-2">
+                            <div class="typing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination if needed -->
+                {% if messages.has_other_pages %}
+                <div class="border-t border-gray-200 px-4 py-2 text-center">
+                    <a href="?conversation={{ conversation.id }}&page={{ messages.previous_page_number }}" 
+                       class="text-sm text-blue-600 hover:underline">
+                        Load earlier messages
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Input Area -->
+                <div class="border-t border-gray-200 p-4">
+                    {% if not can_send_messages %}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-yellow-800">
+                            <strong>Notice:</strong> This agent is currently inactive. Messages cannot be sent at this time.
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <form id="message-form" class="flex space-x-3">
+                        {% csrf_token %}
+                        <div class="flex-1 relative">
+                            <textarea 
+                                   id="message-input"
+                                   name="content" 
+                                   placeholder="Type your message..." 
+                                   rows="1"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                   {% if not can_send_messages %}disabled{% endif %}
+                                   maxlength="5000"></textarea>
+                            <span class="absolute bottom-2 right-2 text-xs text-gray-400">
+                                <span id="char-count">0</span>/5000
+                            </span>
+                        </div>
+                        <button type="submit" 
+                                id="send-button"
+                                {% if not can_send_messages %}disabled{% endif %}
+                                class="{% if can_send_messages %}bg-blue-600 hover:bg-blue-700{% else %}bg-gray-400 cursor-not-allowed{% endif %} text-white px-6 py-3 rounded-lg transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WebSocket and Chat JavaScript -->
+<script>
+    const conversationId = "{{ conversation.id }}";
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}{{ ws_url }}`;
+    const currentUser = "{{ request.user.username }}";
+    let chatSocket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    
+    // Initialize WebSocket connection
+    function initWebSocket() {
+        chatSocket = new WebSocket(wsUrl);
+        
+        chatSocket.onopen = function(e) {
+            console.log('WebSocket connected');
+            updateConnectionStatus('online');
+            reconnectAttempts = 0;
+        };
+        
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            handleIncomingMessage(data);
+        };
+        
+        chatSocket.onclose = function(e) {
+            console.log('WebSocket disconnected');
+            updateConnectionStatus('offline');
+            
+            // Auto-reconnect with exponential backoff
+            if (reconnectAttempts < maxReconnectAttempts) {
+                const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                setTimeout(() => {
+                    reconnectAttempts++;
+                    initWebSocket();
+                }, timeout);
+            }
+        };
+        
+        chatSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+            updateConnectionStatus('error');
+        };
+    }
+    
+    // Update connection status indicator
+    function updateConnectionStatus(status) {
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const statusContainer = document.getElementById('connection-status');
+        
+        switch(status) {
+            case 'online':
+                statusDot.className = 'w-2 h-2 bg-green-500 rounded-full mr-2';
+                statusText.textContent = 'Online';
+                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                break;
+            case 'offline':
+                statusDot.className = 'w-2 h-2 bg-gray-500 rounded-full mr-2';
+                statusText.textContent = 'Offline';
+                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800';
+                break;
+            case 'error':
+                statusDot.className = 'w-2 h-2 bg-red-500 rounded-full mr-2';
+                statusText.textContent = 'Error';
+                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                break;
+        }
+    }
+    
+    // Handle incoming WebSocket messages
+    function handleIncomingMessage(data) {
+        if (data.type === 'chat_message') {
+            addMessageToChat(data.message, data.user === currentUser);
+            hideTypingIndicator();
+        } else if (data.type === 'typing') {
+            if (data.user !== currentUser) {
+                showTypingIndicator();
+            }
+        } else if (data.type === 'stop_typing') {
+            hideTypingIndicator();
+        }
+    }
+    
+    // Add message to chat UI
+    function addMessageToChat(message, isCurrentUser) {
+        const messagesContainer = document.getElementById('messages-container');
+        const emptyState = document.getElementById('empty-state');
+        
+        if (emptyState) {
+            emptyState.remove();
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-item message-fade-in flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`;
+        messageDiv.dataset.messageId = message.id || Date.now();
+        
+        const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        }) : 'Just now';
+        
+        messageDiv.innerHTML = `
+            <div class="max-w-[70%]">
+                <div class="${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-3">
+                    <p class="text-sm whitespace-pre-wrap">${escapeHtml(message.content || message)}</p>
+                </div>
+                <div class="flex items-center mt-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}">
+                    <p class="text-xs text-gray-500">${timestamp}</p>
+                    ${isCurrentUser ? '<span class="ml-2 text-xs text-gray-400">✓</span>' : ''}
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Show/hide typing indicator
+    function showTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        indicator.classList.remove('hidden');
+        
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        indicator.classList.add('hidden');
+    }
+    
+    // Handle message form submission
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const charCount = document.getElementById('char-count');
+    
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        charCount.textContent = this.value.length;
+        
+        // Send typing indicator
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'typing',
+                'user': currentUser
+            }));
+        }
+    });
+    
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const content = messageInput.value.trim();
+        if (!content) return;
+        
+        // Send via WebSocket if connected
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'chat_message',
+                'message': content
+            }));
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            charCount.textContent = '0';
+        } else {
+            // Fallback to AJAX
+            sendMessageViaAjax(content);
+        }
+    });
+    
+    // Fallback AJAX message sending
+    function sendMessageViaAjax(content) {
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: `content=${encodeURIComponent(content)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addMessageToChat({
+                    content: content,
+                    timestamp: data.timestamp
+                }, true);
+                
+                // Clear input
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                charCount.textContent = '0';
+            } else {
+                alert('Failed to send message. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send message. Please try again.');
+        });
+    }
+    
+    // Clear messages function
+    function clearMessages() {
+        if (confirm('Are you sure you want to clear all messages from this view?')) {
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = `
+                <div id="empty-state" class="text-center text-gray-500 py-12">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="text-lg font-medium">Start a conversation</p>
+                    <p class="text-sm mt-1">Send a message to begin chatting with {{ agent.name }}</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Auto-scroll to bottom of messages on load
+    const messagesContainer = document.getElementById('messages-container');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Initialize WebSocket connection if enabled
+    {% if can_send_messages %}
+    initWebSocket();
+    {% endif %}
+    
+    // Handle Enter key for sending (Shift+Enter for new line)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.dispatchEvent(new Event('submit'));
+        }
+    });
+</script>
+{% endblock %}

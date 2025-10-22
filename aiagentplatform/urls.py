@@ -19,7 +19,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('agents/', include('agents.urls')),
     path('chat/', include('chat.urls')),
-    # path('api/integrations/', include('integrations.urls')),
+    path('api/integrations/', include('integrations.urls')),
     # path('analytics/', include('analytics.urls')),
     
     # Health check endpoint

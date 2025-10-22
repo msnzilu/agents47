@@ -1,0 +1,87 @@
+{% extends 'users/base.html' %}
+{% block title %}{{ integration.name }} Details - AI Agent Platform{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <!-- Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-gray-800">{{ integration.name }}</h1>
+      <div class="flex space-x-2">
+        <form action="{% url 'integrations:integration_toggle_active' agent_id=agent.id pk=integration.id %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-{% if integration.is_active %}warning{% else %}success{% endif %}">
+            {% if integration.is_active %}Deactivate{% else %}Activate{% endif %}
+          </button>
+        </form>
+        <a href="{% url 'integrations:integration_update' agent_id=agent.id pk=integration.id %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'integrations:integration_test' agent_id=agent.id pk=integration.id %}" class="btn btn-secondary">Test</a>
+        <a href="{% url 'integrations:integration_list' agent_id=agent.id %}" class="btn btn-secondary">Back to Integrations</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integration Details -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <h2 class="text-lg font-medium text-gray-900">Details</h2>
+        <dl class="mt-2 space-y-2">
+          <dt class="text-sm font-medium text-gray-500">Type</dt>
+          <dd class="text-sm text-gray-900">{{ integration.get_integration_type_display }}</dd>
+          <dt class="text-sm font-medium text-gray-500">Status</dt>
+          <dd class="text-sm text-gray-900">{{ integration.get_status_display }}</dd>
+          <dt class="text-sm font-medium text-gray-500">Active</dt>
+          <dd class="text-sm text-gray-900">{{ integration.is_active|yesno:"Yes,No" }}</dd>
+          {% if integration.webhook_url %}
+            <dt class="text-sm font-medium text-gray-500">Webhook URL</dt>
+            <dd class="text-sm text-gray-900 break-all">{{ integration.webhook_url }}</dd>
+            <dt class="text-sm font-medium text-gray-500">Webhook Secret</dt>
+            <dd class="text-sm text-gray-900">
+              <span id="webhook_secret" class="blur-sm hover:blur-none cursor-pointer" title="Click to reveal">{{ integration.webhook_secret }}</span>
+            </dd>
+          {% endif %}
+          {% if integration.last_triggered_at %}
+            <dt class="text-sm font-medium text-gray-500">Last Triggered</dt>
+            <dd class="text-sm text-gray-900">{{ integration.last_triggered_at|date:"SHORT_DATE_FORMAT" }} {{ integration.last_triggered_at|time:"TIME_FORMAT" }}</dd>
+          {% endif %}
+          {% if integration.error_message %}
+            <dt class="text-sm font-medium text-gray-500">Last Error</dt>
+            <dd class="text-sm text-red-600">{{ integration.error_message }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+      <div>
+        <h2 class="text-lg font-medium text-gray-900">Configuration</h2>
+        <pre class="mt-2 bg-gray-100 p-2 rounded text-sm overflow-x-auto">{{ integration.config|default:"{}"|safe }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Logs -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <h2 class="text-lg font-medium text-gray-900">Recent Webhook Logs</h2>
+    {% if recent_logs %}
+      <div class="mt-2 divide-y divide-gray-200">
+        {% for log in recent_logs %}
+          <div class="py-2">
+            <div class="flex justify-between">
+              <span class="text-sm font-medium text-gray-900">{{ log.event_type|title }}</span>
+              <span class="text-sm text-gray-500">{{ log.created_at|date:"SHORT_DATE_FORMAT" }} {{ log.created_at|time:"TIME_FORMAT" }}</span>
+            </div>
+            <p class="text-sm text-gray-500">Status: {{ log.get_status_display }} {% if log.status_code %}({{ log.status_code }}){% endif %}</p>
+            {% if log.error_message %}
+              <p class="text-sm text-red-600">Error: {{ log.error_message }}</p>
+            {% endif %}
+            <details class="mt-1">
+              <summary class="text-sm text-indigo-600 cursor-pointer">View Payload</summary>
+              <pre class="bg-gray-100 p-2 rounded text-sm overflow-x-auto">{{ log.payload|safe }}</pre>
+            </details>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="mt-2 text-sm text-gray-500">No webhook logs available.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

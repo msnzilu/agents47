@@ -3,95 +3,183 @@
 {% block title %}Dashboard - AI Agent Platform{% endblock %}
 
 {% block content %}
+<!-- Header Section -->
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-    <p class="text-gray-600 mt-1">Welcome back, {{ user.get_display_name }}!</p>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+                Dashboard
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">
+                Welcome back, <span class="font-semibold text-gray-900">{{ user.get_display_name }}</span>! 👋
+            </p>
+        </div>
+        <div class="hidden md:flex items-center gap-3">
+            <a href="{% url 'agents:agent_list' %}" 
+               class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
+                View All Agents
+            </a>
+            <a href="{% url 'agents:agent_create' %}" 
+               class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-xl transform hover:scale-105">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create New Agent
+            </a>
+        </div>
+    </div>
 </div>
 
 <!-- Stats Overview -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600">Total Agents</p>
-                <p class="text-3xl font-bold text-gray-900">{{ total_agents }}</p>
+    <!-- Total Agents Card -->
+    <div class="group relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-xl hover:border-blue-300 transition-all duration-300 overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-full">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    <span class="text-xs font-bold text-blue-600">Active</span>
+                </div>
             </div>
-            <div class="bg-blue-100 rounded-full p-3">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Total Agents</p>
+                <p class="text-4xl font-bold text-gray-900 mb-3">{{ total_agents }}</p>
+                <a href="{% url 'agents:agent_create' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 group/link">
+                    Create new agent
+                    <svg class="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </a>
             </div>
         </div>
-        <a href="{% url 'agents:agent_create' %}" class="text-sm text-blue-600 hover:underline mt-2 inline-block">
-            Create new agent →
-        </a>
     </div>
     
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600">Conversations</p>
-                <p class="text-3xl font-bold text-gray-900">{{ total_conversations }}</p>
+    <!-- Total Conversations Card -->
+    <div class="group relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-xl hover:border-green-300 transition-all duration-300 overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs font-bold text-green-600">Live</span>
+                </div>
             </div>
-            <div class="bg-green-100 rounded-full p-3">
-                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                </svg>
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Conversations</p>
+                <p class="text-4xl font-bold text-gray-900 mb-3">{{ total_conversations }}</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Total interactions</span>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-600">Active Use Cases</p>
-                <p class="text-3xl font-bold text-gray-900">{{ use_case_breakdown|length }}</p>
+    <!-- Active Use Cases Card -->
+    <div class="group relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-xl hover:border-purple-300 transition-all duration-300 overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 bg-purple-50 rounded-full">
+                    <span class="text-xs font-bold text-purple-600">{{ use_case_breakdown|length }}</span>
+                    <span class="text-xs font-medium text-purple-600">Types</span>
+                </div>
             </div>
-            <div class="bg-purple-100 rounded-full p-3">
-                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
+            <div>
+                <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Active Use Cases</p>
+                <p class="text-4xl font-bold text-gray-900 mb-3">{{ use_case_breakdown|length }}</p>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Different categories</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Agents -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Recent Agents</h2>
-        <a href="{% url 'agents:agent_list' %}" class="text-sm text-blue-600 hover:underline">
-            View all →
-        </a>
+<!-- Recent Agents Section -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
+    <div class="px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Recent Agents</h2>
+                <p class="text-sm text-gray-600 mt-1">Your latest AI agents and their activity</p>
+            </div>
+            <a href="{% url 'agents:agent_list' %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200 group">
+                View all
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </a>
+        </div>
     </div>
     
     {% if agents %}
-    <div class="divide-y divide-gray-200">
+    <div class="divide-y divide-gray-100">
         {% for agent in agents %}
-        <div class="px-6 py-4 hover:bg-gray-50 transition">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <a href="{% url 'chat:chat_view' agent.id %}" class="hover:text-blue-600">
-                            {{ agent.name }}
-                        </a>
-                    </h3>
-                    <p class="text-sm text-gray-600 mt-1">{{ agent.description|truncatewords:20 }}</p>
-                    <div class="flex items-center space-x-4 mt-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <div class="px-6 py-5 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 group">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
+                            <span class="text-lg">🤖</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                            <a href="{% url 'chat:chat_view' agent.id %}" class="hover:underline">
+                                {{ agent.name }}
+                            </a>
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600 leading-relaxed mb-3 line-clamp-2">
+                        {{ agent.description|truncatewords:20 }}
+                    </p>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
                             {{ agent.get_use_case_display }}
                         </span>
-                        <span class="text-xs text-gray-500">
-                            {{ agent.conversation_count }} conversation{{ agent.conversation_count|pluralize }}
+                        <span class="inline-flex items-center gap-1.5 text-xs text-gray-600">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <span class="font-medium">{{ agent.conversation_count }}</span> conversation{{ agent.conversation_count|pluralize }}
                         </span>
-                        <span class="text-xs text-gray-500">
+                        <span class="inline-flex items-center gap-1.5 text-xs text-gray-600">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
                             Created {{ agent.created_at|timesince }} ago
                         </span>
                     </div>
                 </div>
-                <div class="ml-4">
+                <div class="flex-shrink-0 flex flex-col gap-2">
                     <a href="{% url 'chat:chat_view' agent.id %}" 
-                       class="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition text-sm font-medium">
+                       class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
                         Open Chat
                     </a>
                 </div>
@@ -100,34 +188,49 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="px-6 py-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No agents yet</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating your first AI agent.</p>
-        <div class="mt-6">
-            <a href="{% url 'agents:agent_create' %}" 
-               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                Create Agent
-            </a>
+    <div class="px-6 py-16 text-center">
+        <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl">
+            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
         </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">No agents yet</h3>
+        <p class="text-sm text-gray-600 mb-6 max-w-md mx-auto">Get started by creating your first AI agent. It only takes a few minutes to set up!</p>
+        <a href="{% url 'agents:agent_create' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create Your First Agent
+        </a>
     </div>
     {% endif %}
 </div>
 
 <!-- Use Case Breakdown -->
 {% if use_case_breakdown %}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-900">Agents by Use Case</h2>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900">Agents by Use Case</h2>
+            <p class="text-sm text-gray-600 mt-1">Distribution of your AI agents across different categories</p>
+        </div>
     </div>
-    <div class="px-6 py-4">
-        <div class="space-y-3">
+    <div class="px-6 py-6">
+        <div class="space-y-4">
             {% for item in use_case_breakdown %}
-            <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700">{{ item.use_case|title }}</span>
-                <span class="text-sm text-gray-600">{{ item.count }} agent{{ item.count|pluralize }}</span>
+            <div class="group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-900">{{ item.use_case|title }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-gray-900">{{ item.count }}</span>
+                        <span class="text-xs text-gray-500">agent{{ item.count|pluralize }}</span>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500 group-hover:from-blue-600 group-hover:to-indigo-700" 
+                         style="width: {% widthratio item.count total_agents 100 %}%"></div>
+                </div>
             </div>
             {% endfor %}
         </div>

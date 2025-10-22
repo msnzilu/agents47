@@ -231,3 +231,66 @@ def agent_toggle_active(request, pk):
         messages.success(request, f'Agent "{agent.name}" {status}!')
     
     return redirect('agents:agent_detail', pk=pk)
+
+@login_required
+def agent_setup_llm(request, pk):
+    """
+    Setup LLM integration for an agent.
+    """
+    from integrations.models import Integration
+    
+    agent = get_object_or_404(Agent, pk=pk, user=request.user)
+    
+    # Get existing LLM integrations
+    existing_integrations = Integration.objects.filter(
+        agent=agent,
+        integration_type__in=['openai', 'anthropic']
+    )
+    
+    if request.method == 'POST':
+        provider = request.POST.get('provider')  # 'openai' or 'anthropic'
+        api_key = request.POST.get('api_key')
+        
+        if not provider or not api_key:
+            messages.error(request, 'Provider and API key are required')
+            return redirect('agents:agent_setup_llm', pk=agent.pk)
+        
+        # Create or update integration
+        integration, created = Integration.objects.update_or_create(
+            agent=agent,
+            integration_type=provider,
+            defaults={
+                'name': f'{provider.upper()} API',
+                'config': {'api_key': api_key},
+                'status': Integration.Status.ACTIVE,
+                'is_active': True,
+            }
+        )
+        
+        action = 'created' if created else 'updated'
+        messages.success(request, f'{provider.upper()} integration {action} successfully!')
+        return redirect('agents:agent_detail', pk=agent.pk)
+    
+    context = {
+        'agent': agent,
+        'existing_integrations': existing_integrations,
+    }
+    return render(request, 'users/agents/agent_setup_llm.html', context)
+
+
+@login_required
+def agent_delete_integration(request, pk, integration_id):
+    """
+    Delete an LLM integration for an agent.
+    """
+    from integrations.models import Integration
+    
+    agent = get_object_or_404(Agent, pk=pk, user=request.user)
+    integration = get_object_or_404(Integration, pk=integration_id, agent=agent)
+    
+    if request.method == 'POST':
+        provider = integration.get_integration_type_display()
+        integration.delete()
+        messages.success(request, f'{provider} integration deleted!')
+    
+    return redirect('agents:agent_setup_llm', pk=agent.pk)

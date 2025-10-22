@@ -17,6 +17,7 @@ import logging
 
 from agents.models import Agent
 from .models import Conversation, Message
+from .tasks import trigger_agent_response
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,7 @@ def chat_view(request, agent_id):
     return render(request, 'users/chat/chat.html', context)
 
 
+# chat/views.py (update handle_message_post)
 def handle_message_post(request, conversation):
     """Handle POST request to send a message"""
     try:
@@ -102,7 +104,7 @@ def handle_message_post(request, conversation):
         if not content:
             return JsonResponse({'error': 'Message content is required'}, status=400)
         
-        if len(content) > 5000:  # Max message length
+        if len(content) > 5000:
             return JsonResponse({'error': 'Message is too long'}, status=400)
         
         # Create message
@@ -121,9 +123,9 @@ def handle_message_post(request, conversation):
         conversation.updated_at = timezone.now()
         conversation.save(update_fields=['updated_at'])
         
-        # Trigger agent response (async task or webhook)
+        # Trigger agent response asynchronously
         if conversation.agent.is_active:
-            trigger_agent_response.delay(message.id)  # Celery task
+            trigger_agent_response.delay(message.id)
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
@@ -132,15 +134,14 @@ def handle_message_post(request, conversation):
                 'timestamp': message.created_at.isoformat()
             })
         
-        return redirect('chat:conversation', agent_id=conversation.agent.id)
+        return redirect('chat:chat_view', agent_id=conversation.agent.id)
         
     except Exception as e:
         logger.error(f"Error sending message: {str(e)}")
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'error': 'Failed to send message'}, status=500)
         messages.error(request, "Failed to send message. Please try again.")
-        return redirect('chat:conversation', agent_id=conversation.agent.id)
-
+        return redirect('chat:chat_view', agent_id=conversation.agent.id)
 
 @require_http_methods(["GET"])
 def embed_chat(request, agent_id):
@@ -226,3 +227,5 @@ def delete_conversation(request, conversation_id):
     
     messages.success(request, "Conversation deleted successfully")
     return redirect('chat:history', agent_id=conversation.agent.id)
+
+

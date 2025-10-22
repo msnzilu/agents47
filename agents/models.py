@@ -175,3 +175,16 @@ class KnowledgeBase(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.agent.name}"
+
+class ToolExecution(models.Model):
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='tool_executions')
+    tool_name = models.CharField(max_length=100)
+    input_data = models.JSONField(default=dict)
+    output_data = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.tool_name} - {self.created_at}"

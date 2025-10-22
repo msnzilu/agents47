@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # ======== External Apps ========
     'rest_framework',
     'channels',
+    'celery',
 
 ]
 
@@ -138,5 +139,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ======= CELERY CONFIGURATIONS ======================
 CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis', 6379)],
+        },
+    },
+}
+
+
+
+# =========API KEY CONFIGURATIONS ===================
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 

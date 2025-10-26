@@ -41,15 +41,16 @@ def chat_view(request, agent_id):
     conversation_id = request.GET.get('conversation')
     
     try:
-        if conversation_id:
+        if conversation_id and conversation_id != 'new':
+            # Use existing conversation
             conversation = get_object_or_404(
                 Conversation, 
                 pk=conversation_id, 
                 agent=agent,
-                user=request.user  # Ensure conversation belongs to user
+                user=request.user
             )
-        else:
-            # Create new conversation with transaction
+        elif conversation_id == 'new':
+            # Explicitly create new conversation
             with transaction.atomic():
                 conversation = Conversation.objects.create(
                     agent=agent,
@@ -62,6 +63,34 @@ def chat_view(request, agent_id):
                         'created_via': 'web_interface'
                     }
                 )
+            # Redirect to avoid duplicate on refresh
+            return redirect(f"{request.path}?conversation={conversation.id}")
+        else:
+            # No conversation_id - get most recent or create one
+            conversation = Conversation.objects.filter(
+                agent=agent,
+                user=request.user,
+                is_active=True
+            ).order_by('-updated_at').first()
+            
+            if not conversation:
+                # Create new conversation only if none exists
+                with transaction.atomic():
+                    conversation = Conversation.objects.create(
+                        agent=agent,
+                        user=request.user,
+                        title=f"Chat with {agent.name}",
+                        channel='web',
+                        metadata={
+                            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                            'ip_address': request.META.get('REMOTE_ADDR', ''),
+                            'created_via': 'web_interface'
+                        }
+                    )
+            
+            # Redirect to include conversation ID in URL
+            return redirect(f"{request.path}?conversation={conversation.id}")
+            
     except Exception as e:
         logger.error(f"Error creating/retrieving conversation: {str(e)}")
         messages.error(request, "Unable to start conversation. Please try again.")
@@ -95,7 +124,6 @@ def chat_view(request, agent_id):
     return render(request, 'users/chat/chat.html', context)
 
 
-# chat/views.py (update handle_message_post)
 def handle_message_post(request, conversation):
     """Handle POST request to send a message"""
     try:
@@ -110,7 +138,7 @@ def handle_message_post(request, conversation):
         # Create message
         message = Message.objects.create(
             conversation=conversation,
-            user=request.user,
+            user=request.user,  # Added user field
             role='user',
             content=content,
             metadata={
@@ -143,6 +171,7 @@ def handle_message_post(request, conversation):
         messages.error(request, "Failed to send message. Please try again.")
         return redirect('chat:chat_view', agent_id=conversation.agent.id)
 
+
 @require_http_methods(["GET"])
 def embed_chat(request, agent_id):
     """
@@ -164,7 +193,8 @@ def embed_chat(request, agent_id):
     if not request.user.is_authenticated:
         session_id = request.session.get('anonymous_chat_id')
         if not session_id:
-            request.session['anonymous_chat_id'] = generate_session_id()
+            import uuid
+            request.session['anonymous_chat_id'] = str(uuid.uuid4())
             request.session.save()
     
     context = {
@@ -227,5 +257,3 @@ def delete_conversation(request, conversation_id):
     
     messages.success(request, "Conversation deleted successfully")
     return redirect('chat:history', agent_id=conversation.agent.id)
-
-

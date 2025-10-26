@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.web
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn aiagentplatform.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 --workers 4
     volumes:
       - .:/app
     ports:

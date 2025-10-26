@@ -15,7 +15,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, TemplateView
 from django.db.models import Count, Q
 from django.utils import timezone
-
+from django.conf import settings
 from .forms import (
     CustomUserCreationForm, CustomAuthenticationForm, 
     CustomPasswordResetForm, UserProfileForm
@@ -47,7 +47,7 @@ class RegisterView(CreateView):
         user = authenticate(username=email, password=password)
         if user:
             login(self.request, user)
-            messages.success(self.request, 'Account created successfully! Welcome to AI Agent Platform.')
+            messages.success(self.request, f'Account created successfully! Welcome to {settings.SITE_NAME}.')
             return redirect('users:dashboard')
         return response
     

@@ -1,4 +1,10 @@
-# 2. Create route (routing.py) - REQUIRED!
+"""
+WebSocket URL routing for chat application
+Phase 4: Real-Time Chat & WebSockets
+"""
+from django.urls import re_path
+from . import consumers
+
 websocket_urlpatterns = [
-    path('ws/chat/', ChatConsumer.as_asgi()),
+    re_path(r'ws/chat/(?P<conversation_id>\d+)/$', consumers.ChatConsumer.as_asgi()),
 ]

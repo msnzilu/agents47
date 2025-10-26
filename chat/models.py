@@ -24,6 +24,15 @@ class Conversation(models.Model):
         default='New Conversation',
         help_text=_('Auto-generated or user-set title')
     )
+    # Add the missing user field
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name='conversations',
+        help_text=_('User who owns this conversation')
+    )
     
     # Session tracking
     session_id = models.CharField(
@@ -45,10 +54,17 @@ class Conversation(models.Model):
             ('sms', 'SMS'),
         ]
     )
+
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=_('Additional metadata about the conversation')
+    )
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
     
     class Meta:
         verbose_name = _('conversation')
@@ -89,6 +105,15 @@ class Message(models.Model):
         on_delete=models.CASCADE,
         related_name='messages'
     )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='messages',
+        help_text=_('User who sent this message (null for assistant messages)')
+    )
     
     role = models.CharField(
         max_length=20,
@@ -105,6 +130,11 @@ class Message(models.Model):
         default=list,
         blank=True,
         help_text=_('Tools called during this message (if any)')
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=_('Additional message metadata')
     )
     
     # Metadata

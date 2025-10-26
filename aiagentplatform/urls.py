@@ -30,8 +30,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-# Custom admin site configuration
-admin.site.site_header = "AI Agent Platform Admin"
-admin.site.site_title = "AI Agent Platform"
-admin.site.index_title = "Welcome to AI Agent Platform Administration"

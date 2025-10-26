@@ -4,7 +4,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
                 <!-- Brand Section -->
                 <div class="space-y-3">
-                    <h3 class="text-lg font-semibold text-gray-900">AI Agent Platform</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">{{ SITE_NAME }}</h3>
                     <p class="text-sm text-gray-600 leading-relaxed">
                         Empowering businesses with intelligent automation and AI-driven solutions.
                     </p>
@@ -15,7 +15,7 @@
                     <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wider">Quick Links</h4>
                     <ul class="space-y-2">
                         <li>
-                            <a href="#" class="text-sm text-gray-600 hover:text-blue-600 hover:translate-x-1 inline-block transition-all duration-200">
+                            <a href="{% url 'users:dashboard' %}" class="text-sm text-gray-600 hover:text-blue-600 hover:translate-x-1 inline-block transition-all duration-200">
                                 Dashboard
                             </a>
                         </li>
@@ -59,7 +59,7 @@
             <div class="pt-6 border-t border-gray-200">
                 <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     <p class="text-center md:text-left text-gray-500 text-sm">
-                        &copy; 2025 AI Agent Platform. All rights reserved.
+                        &copy; 2025 {{ SITE_NAME }}. All rights reserved.
                     </p>
                     <div class="flex items-center space-x-4">
                         <span class="text-xs text-gray-400">Powered by AI</span>

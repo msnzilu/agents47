@@ -1,4 +1,4 @@
-# AI Agent Platform MVP
+# Agents 47 MVP
 
 A web-based platform for creating, customizing, and deploying intelligent AI agents for business use cases including customer support, research, automation, scheduling, knowledge management, and sales.
 

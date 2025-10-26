@@ -20,6 +20,7 @@ SECRET_KEY = 'django-insecure-ejfykh%3w6o)mpsrfsol367j7%-62f1sud4dn^j_fkvx*djldj
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
+SITE_NAME = env('SITE_NAME')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
@@ -76,12 +77,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'context_processors.site_context',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'aiagentplatform.wsgi.application'
+ASGI_APPLICATION = 'aiagentplatform.asgi.application'
 
 
 # Database
@@ -138,8 +141,13 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ======= CELERY CONFIGURATIONS ======================
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BROKER_URL = env('REDIS_URL')
+CELERY_RESULT_BACKEND = env('REDIS_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
 
 CHANNEL_LAYERS = {
     'default': {
@@ -152,7 +160,7 @@ CHANNEL_LAYERS = {
 
 
 
-# =========API KEY CONFIGURATIONS ===================
+# =========API KEY CONFIGURATIONS ===============================
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 

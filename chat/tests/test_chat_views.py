@@ -1,6 +1,7 @@
 """
 Chat Views Tests for Phase 4
 Tests view rendering, permissions, and conversation management
+FIXED: Removed system_prompt field (doesn't exist in Agent model)
 """
 import pytest
 from django.test import TestCase, Client
@@ -25,11 +26,11 @@ class TestChatViews(TestCase):
             email='test@example.com',
             password='testpass123'
         )
+        # FIXED: Removed system_prompt parameter
         self.agent = Agent.objects.create(
             name='Test Agent',
             user=self.user,
-            is_active=True,
-            system_prompt='You are helpful.'
+            is_active=True
         )
         self.conversation = Conversation.objects.create(
             agent=self.agent,

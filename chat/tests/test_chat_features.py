@@ -1,6 +1,7 @@
 """
 Chat Features Tests for Phase 4
 Tests message management, conversation switching, and content rendering
+FIXED: Added missing login calls
 """
 import pytest
 from django.test import TestCase, Client
@@ -39,8 +40,6 @@ class TestChatFeatures(TestCase):
     
     def test_message_delete_soft_deletes(self):
         """Test that deleting a message soft-deletes it"""
-        self.client.login(username='testuser', password='testpass123')
-        
         # Create a message
         message = Message.objects.create(
             conversation=self.conversation,
@@ -68,6 +67,7 @@ class TestChatFeatures(TestCase):
     
     def test_conversation_switching_loads_correct_history(self):
         """Test switching between conversations loads correct messages"""
+        # FIXED: Added login
         self.client.login(username='testuser', password='testpass123')
         
         # Create second conversation
@@ -112,6 +112,7 @@ class TestChatFeatures(TestCase):
     
     def test_markdown_renders_safely(self):
         """Test that markdown in messages is rendered safely"""
+        # FIXED: Added login
         self.client.login(username='testuser', password='testpass123')
         
         # Create message with markdown and potential XSS
@@ -143,6 +144,7 @@ class TestChatFeatures(TestCase):
     
     def test_conversation_title_updates(self):
         """Test that conversation title can be updated"""
+        # FIXED: Added login
         self.client.login(username='testuser', password='testpass123')
         
         # Update title
@@ -203,6 +205,7 @@ class TestChatFeatures(TestCase):
     
     def test_empty_conversation_shows_empty_state(self):
         """Test that conversation with no messages shows empty state"""
+        # FIXED: Added login
         self.client.login(username='testuser', password='testpass123')
         
         url = reverse('chat:chat_view', args=[self.agent.id])

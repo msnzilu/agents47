@@ -167,7 +167,7 @@ class TestWebSocketConnections:
             name='Test Agent',
             user=user,
             is_active=True,
-            system_prompt='You are a helpful assistant.'
+            prompt_template='You are a helpful assistant.'
         )
         
         conversation = await database_sync_to_async(Conversation.objects.create)(

@@ -34,7 +34,7 @@ class TestStreaming:
             name='Test Agent',
             user=user,
             is_active=True,
-            system_prompt='You are helpful.'
+            prompt_template='You are helpful.'
         )
         
         conversation = await database_sync_to_async(Conversation.objects.create)(
@@ -111,7 +111,7 @@ class TestStreaming:
             name='Test Agent',
             user=user,
             is_active=True,
-            system_prompt='Give detailed explanations.'
+            prompt_template='Give detailed explanations.'
         )
         
         conversation = await database_sync_to_async(Conversation.objects.create)(

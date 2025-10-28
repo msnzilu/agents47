@@ -1,3 +1,11 @@
 docker-compose exec web pytest
 
 docker exec -it aiagentplatform-db-1 psql -U anexx -d ai_agents_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+
+
+CREATE DATABASE ai_agents_db CHARACTER SET UTF8MB4;
+CREATE USER 'anexx'@'localhost' IDENTIFIED BY 'HxHxHz2030';
+GRANT ALL PRIVILEGES ON ai_agents_db.* TO 'anexx'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;

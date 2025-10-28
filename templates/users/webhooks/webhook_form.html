@@ -1,0 +1,214 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Create{% endif %} Webhook - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{% if is_edit %}{% url 'webhooks:webhook-detail' webhook.id %}{% else %}{% url 'webhooks:webhook-list' %}{% endif %}" 
+           class="text-blue-600 hover:text-blue-800 inline-flex items-center text-sm mb-4">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to {% if is_edit %}Webhook{% else %}Webhooks{% endif %}
+        </a>
+        
+        <h1 class="text-3xl font-bold text-gray-900">
+            {% if is_edit %}Edit Webhook{% else %}Create New Webhook{% endif %}
+        </h1>
+        <p class="mt-2 text-gray-600">
+            {% if is_edit %}
+                Update webhook configuration and event subscriptions
+            {% else %}
+                Configure a webhook to receive real-time notifications for agent events
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Webhook Name *
+                </label>
+                <input type="text" 
+                       id="name" 
+                       name="name" 
+                       value="{% if is_edit %}{{ webhook.name }}{% endif %}"
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="e.g., Production Notification System">
+                <p class="mt-1 text-sm text-gray-500">A descriptive name for this webhook</p>
+            </div>
+
+            <!-- URL -->
+            <div>
+                <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
+                    Webhook URL *
+                </label>
+                <input type="url" 
+                       id="url" 
+                       name="url" 
+                       value="{% if is_edit %}{{ webhook.url }}{% endif %}"
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                       placeholder="https://api.example.com/webhooks/ai-agent">
+                <p class="mt-1 text-sm text-gray-500">The endpoint URL where webhook events will be sent</p>
+            </div>
+
+            <!-- Agent (Optional) -->
+            <div>
+                <label for="agent" class="block text-sm font-medium text-gray-700 mb-2">
+                    Agent (Optional)
+                </label>
+                <select id="agent" 
+                        name="agent"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Agents</option>
+                    {% for agent in agents %}
+                        <option value="{{ agent.id }}" 
+                                {% if is_edit and webhook.agent.id == agent.id %}selected{% endif %}>
+                            {{ agent.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">Leave blank to receive events from all agents</p>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          rows="3"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Optional description of what this webhook does...">{% if is_edit %}{{ webhook.description }}{% endif %}</textarea>
+            </div>
+
+            <!-- Events -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    Event Subscriptions *
+                </label>
+                <div class="space-y-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    {% for event_value, event_label in event_choices %}
+                        <label class="flex items-start cursor-pointer hover:bg-white p-3 rounded transition-colors">
+                            <input type="checkbox" 
+                                   name="events" 
+                                   value="{{ event_value }}"
+                                   {% if is_edit and event_value in webhook.events %}checked{% endif %}
+                                   class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <div class="ml-3 flex-1">
+                                <span class="font-medium text-gray-900">{{ event_label }}</span>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    {% if event_value == 'conversation.started' %}
+                                        Triggered when a new conversation begins with an agent
+                                    {% elif event_value == 'conversation.ended' %}
+                                        Triggered when a conversation is marked as complete
+                                    {% elif event_value == 'message.received' %}
+                                        Triggered when a user sends a message to an agent
+                                    {% elif event_value == 'message.sent' %}
+                                        Triggered when an agent sends a response message
+                                    {% elif event_value == 'agent.updated' %}
+                                        Triggered when agent configuration or settings change
+                                    {% elif event_value == 'agent.deleted' %}
+                                        Triggered when an agent is deleted
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Select at least one event to subscribe to</p>
+            </div>
+
+            <!-- Secret (only shown on edit) -->
+            {% if is_edit %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Signing Secret
+                </label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" 
+                           id="secret" 
+                           value="{{ webhook.secret }}" 
+                           readonly
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm">
+                    <button type="button" 
+                            onclick="copySecret()"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Copy
+                    </button>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Use this secret to verify webhook signatures</p>
+            </div>
+            {% endif %}
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{% if is_edit %}{% url 'webhooks:webhook-detail' webhook.id %}{% else %}{% url 'webhooks:webhook-list' %}{% endif %}"
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                
+                <button type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {% if is_edit %}Update Webhook{% else %}Create Webhook{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <svg class="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-900">Webhook Payload Format</h3>
+                <div class="mt-2 text-sm text-blue-800">
+                    <p class="mb-2">Webhooks will be sent as POST requests with the following structure:</p>
+                    <pre class="bg-white border border-blue-200 rounded p-3 overflow-x-auto text-xs"><code>{
+  "event": "message.sent",
+  "timestamp": "2025-10-29T10:30:00Z",
+  "agent_id": "123",
+  "conversation_id": "456",
+  "data": { ... }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copySecret() {
+    const secretInput = document.getElementById('secret');
+    secretInput.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('bg-green-100', 'text-green-700');
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove('bg-green-100', 'text-green-700');
+    }, 2000);
+}
+</script>
+{% endblock %}

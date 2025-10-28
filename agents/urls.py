@@ -24,4 +24,7 @@ urlpatterns = [
     # =========== LLm integrations setup ==============================
     path('<int:pk>/setup-llm/', views.agent_setup_llm, name='agent_setup_llm'),
     path('<int:pk>/integrations/<int:integration_id>/delete/', views.agent_delete_integration, name='agent_delete_integration'),
+    path('<int:agent_id>/knowledge/', views.KnowledgeBaseListView.as_view(), name='knowledge_base_list'),
+    path('<int:agent_id>/knowledge/create/', views.KnowledgeBaseCreateView.as_view(), name='knowledge_base_create'),
+    path('knowledge/<int:pk>/delete/', views.KnowledgeBaseDeleteView.as_view(), name='knowledge_base_delete'),
 ]

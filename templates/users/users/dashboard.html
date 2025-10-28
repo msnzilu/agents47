@@ -58,9 +58,10 @@
 
 <!-- Recent Agents -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Recent Agents</h2>
-        <a href="{% url 'agents:agent_list' %}" class="text-sm text-blue-600 hover:underline">
+    <!-- Header -->
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Recent Agents</h2>
+        <a href="{% url 'agents:agent_list' %}" class="text-xs sm:text-sm text-blue-600 hover:underline whitespace-nowrap">
             View all →
         </a>
     </div>
@@ -68,31 +69,50 @@
     {% if agents %}
     <div class="divide-y divide-gray-200">
         {% for agent in agents %}
-        <div class="px-6 py-4 hover:bg-gray-50 transition">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h3 class="text-lg font-medium text-gray-900">
+        <div class="px-4 sm:px-6 py-4 hover:bg-gray-50 transition">
+            <!-- Mobile/Tablet: Stack layout, Desktop: Horizontal layout -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Agent Info -->
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 truncate">
                         <a href="{% url 'chat:chat_view' agent.id %}" class="hover:text-blue-600">
                             {{ agent.name }}
                         </a>
                     </h3>
-                    <p class="text-sm text-gray-600 mt-1">{{ agent.description|truncatewords:20 }}</p>
-                    <div class="flex items-center space-x-4 mt-2">
+                    <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ agent.description|truncatewords:20 }}</p>
+                    
+                    <!-- Meta Info - Responsive wrapping -->
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {{ agent.get_use_case_display }}
                         </span>
-                        <span class="text-xs text-gray-500">
+                        <span class="text-xs text-gray-500 whitespace-nowrap">
                             {{ agent.conversation_count }} conversation{{ agent.conversation_count|pluralize }}
                         </span>
-                        <span class="text-xs text-gray-500">
+                        <span class="text-xs text-gray-500 whitespace-nowrap">
                             Created {{ agent.created_at|timesince }} ago
                         </span>
                     </div>
                 </div>
-                <div class="ml-4">
+                
+             <!-- Action Buttons -->
+                <div class="flex flex-row gap-2 sm:gap-3 lg:ml-4 flex-shrink-0">
+                    <!-- Open Chat Button -->
                     <a href="{% url 'chat:chat_view' agent.id %}" 
-                       class="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition text-sm font-medium">
+                    class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-medium shadow-sm whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
                         Open Chat
+                    </a>
+                    
+                    <!-- Agent Details Button -->
+                    <a href="{% url 'agents:agent_detail' agent.id %}" 
+                    class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors text-sm font-medium whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Details
                     </a>
                 </div>
             </div>
@@ -100,12 +120,13 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="px-6 py-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Empty State -->
+    <div class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+        <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
         </svg>
         <h3 class="mt-2 text-sm font-medium text-gray-900">No agents yet</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating your first AI agent.</p>
+        <p class="mt-1 text-sm text-gray-500 px-4">Get started by creating your first AI agent.</p>
         <div class="mt-6">
             <a href="{% url 'agents:agent_create' %}" 
                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">

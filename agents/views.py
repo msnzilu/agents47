@@ -9,10 +9,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.db.models import Count, Q
-
-from .models import Agent
+from .models import Agent, KnowledgeBase
 from .forms import AgentCreateForm, AgentUpdateForm, AgentCloneForm
 from chat.models import Conversation
+from .tasks import process_knowledge_base_task
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AgentListView(LoginRequiredMixin, ListView):
@@ -68,11 +71,11 @@ class AgentListView(LoginRequiredMixin, ListView):
         context['active_agents'] = user_agents.filter(is_active=True).count()
         
         return context
-
-
+    
 class AgentDetailView(LoginRequiredMixin, DetailView):
     """
     Detailed view of a single agent.
+    Phase 1-7: Complete implementation with stats, KB, webhooks, and embed code
     """
     model = Agent
     template_name = 'users/agents/agent_detail.html'
@@ -86,7 +89,7 @@ class AgentDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         agent = self.get_object()
         
-        # Get recent conversations
+        # Get recent conversations with message count
         context['recent_conversations'] = Conversation.objects.filter(
             agent=agent
         ).annotate(
@@ -99,7 +102,71 @@ class AgentDetailView(LoginRequiredMixin, DetailView):
             total=Count('messages')
         )['total'] or 0
         
+        # Phase 5: Knowledge Base stats
+        from agents.models import KnowledgeBase
+        kb_documents = KnowledgeBase.objects.filter(agent=agent)
+        context['kb_total_docs'] = kb_documents.count()
+        context['kb_completed_docs'] = kb_documents.filter(status='completed').count()
+        context['kb_total_chunks'] = sum(
+            doc.total_chunks for doc in kb_documents if doc.total_chunks
+        )
+        context['kb_status'] = {
+            'rag_enabled': context['kb_completed_docs'] > 0,
+        }
+        
+        # Phase 7: Webhooks count
+        from webhooks.models import Webhook
+        context['webhooks'] = Webhook.objects.filter(
+            agent=agent, 
+            is_active=True
+        )
+        
+        # Phase 7: Generate embed code for the widget
+        base_url = f"{self.request.scheme}://{self.request.get_host()}"
+        context['embed_code'] = f'''<script src="{base_url}/embed/loader/{agent.id}/" async></script>
+<script>
+  window.AIAgentWidget = {{
+    agentId: '{agent.id}',
+    theme: 'light',              // 'light' or 'dark'
+    primaryColor: '#4F46E5',     // Any hex color
+    position: 'right',           // 'left' or 'right'
+    greeting: 'Hi! Need help?'   // Custom greeting message
+  }};
+</script>'''
+        
         return context
+
+
+# class AgentDetailView(LoginRequiredMixin, DetailView):
+#     """
+#     Detailed view of a single agent.
+#     """
+#     model = Agent
+#     template_name = 'users/agents/agent_detail.html'
+#     context_object_name = 'agent'
+    
+#     def get_queryset(self):
+#         """Ensure user can only view their own agents."""
+#         return Agent.objects.filter(user=self.request.user)
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         agent = self.get_object()
+        
+#         # Get recent conversations
+#         context['recent_conversations'] = Conversation.objects.filter(
+#             agent=agent
+#         ).annotate(
+#             message_count=Count('messages')
+#         ).order_by('-updated_at')[:10]
+        
+#         # Get conversation stats
+#         context['total_conversations'] = agent.conversations.count()
+#         context['total_messages'] = agent.conversations.aggregate(
+#             total=Count('messages')
+#         )['total'] or 0
+        
+#         return context
 
 
 class AgentCreateView(LoginRequiredMixin, CreateView):
@@ -294,3 +361,72 @@ def agent_delete_integration(request, pk, integration_id):
         messages.success(request, f'{provider} integration deleted!')
     
     return redirect('agents:agent_setup_llm', pk=agent.pk)
+
+class KnowledgeBaseListView(LoginRequiredMixin, ListView):
+    """List knowledge bases for an agent."""
+    model = KnowledgeBase
+    template_name = 'users/agents/knowledge_base_list.html'
+    context_object_name = 'knowledge_bases'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        agent_id = self.kwargs['agent_id']
+        agent = get_object_or_404(Agent, id=agent_id, user=self.request.user)
+        return KnowledgeBase.objects.filter(agent=agent)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agent_id = self.kwargs['agent_id']
+        context['agent'] = get_object_or_404(Agent, id=agent_id, user=self.request.user)
+        return context
+
+
+class KnowledgeBaseCreateView(LoginRequiredMixin, CreateView):
+    """Upload and create new knowledge base document."""
+    model = KnowledgeBase
+    template_name = 'users/agents/knowledge_base_create.html'
+    fields = ['title', 'document_type', 'file_path', 'content', 'chunk_size', 'chunk_overlap']
+    
+    def form_valid(self, form):
+        agent_id = self.kwargs['agent_id']
+        agent = get_object_or_404(Agent, id=agent_id, user=self.request.user)
+        
+        form.instance.agent = agent
+        form.instance.status = 'pending'
+        
+        response = super().form_valid(form)
+        
+        # Trigger async processing
+        process_knowledge_base_task.delay(self.object.id)
+        
+        messages.success(
+            self.request,
+            f"Knowledge base '{self.object.title}' uploaded. Processing started."
+        )
+        
+        return response
+    
+    def get_success_url(self):
+        return reverse_lazy('agents:knowledge_base_list', kwargs={'agent_id': self.kwargs['agent_id']})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agent_id = self.kwargs['agent_id']
+        context['agent'] = get_object_or_404(Agent, id=agent_id, user=self.request.user)
+        return context
+
+
+class KnowledgeBaseDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete knowledge base document."""
+    model = KnowledgeBase
+    template_name = 'agents/knowledge_base_confirm_delete.html'
+    
+    def get_queryset(self):
+        return KnowledgeBase.objects.filter(agent__user=self.request.user)
+    
+    def get_success_url(self):
+        return reverse_lazy('agents:knowledge_base_list', kwargs={'agent_id': self.object.agent.id})
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Knowledge base deleted successfully.")
+        return super().delete(request, *args, **kwargs)

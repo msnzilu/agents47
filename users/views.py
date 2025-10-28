@@ -5,6 +5,9 @@ Phase 1: Foundation & Authentication
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.core.mail import send_mail
 from django.contrib.auth.views import (
     LoginView, LogoutView, PasswordResetView, 
     PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
@@ -22,6 +25,75 @@ from .forms import (
 )
 
 User = get_user_model()
+
+def contact_view(request):
+    """Display the contact page"""
+    return render(request, 'users/legal/contact.html')
+
+@require_POST
+def contact_submit(request):
+    """Handle contact form submission"""
+    name = request.POST.get('name', '').strip()
+    email = request.POST.get('email', '').strip()
+    subject = request.POST.get('subject', '').strip()
+    message = request.POST.get('message', '').strip()
+    
+    # Validation
+    if not all([name, email, subject, message]):
+        html = '''
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <p class="font-medium">✗ All fields are required</p>
+            </div>
+        '''
+        return JsonResponse({'success': False, 'html': html}, status=400)
+    
+    if len(message) < 10:
+        html = '''
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <p class="font-medium">✗ Message must be at least 10 characters</p>
+            </div>
+        '''
+        return JsonResponse({'success': False, 'html': html}, status=400)
+    
+    # Send email
+    try:
+        email_subject = f"Contact Form: {subject} - {name}"
+        email_body = f"""
+New Contact Form Submission
+
+Name: {name}
+Email: {email}
+Subject: {subject}
+
+Message:
+{message}
+        """
+        
+        send_mail(
+            email_subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            ['support@yourplatform.com'],  # Replace with your email
+            fail_silently=False,
+        )
+        
+        # Return success message
+        html = '''
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                <p class="font-medium">✓ Message sent successfully!</p>
+                <p class="text-sm mt-1">We'll get back to you within 24 hours.</p>
+            </div>
+        '''
+        return JsonResponse({'success': True, 'html': html})
+        
+    except Exception as e:
+        html = '''
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <p class="font-medium">✗ Error sending message</p>
+                <p class="text-sm mt-1">Please try again or email us directly at support@yourplatform.com</p>
+            </div>
+        '''
+        return JsonResponse({'success': False, 'html': html}, status=500)
 
 
 class RegisterView(CreateView):

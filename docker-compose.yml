@@ -49,19 +49,33 @@ services:
       redis:
         condition: service_healthy
 
-  # celery:
-  #   build: .
-  #   command: celery -A ai_agent_platform worker -l info
-  #   volumes:
-  #     - .:/app
-  #   environment:
-  #     - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
-  #     - REDIS_URL=redis://redis:6379/0
-  #     - DEBUG=True
-  #     - SECRET_KEY=dev-secret-key-change-in-production
-  #   depends_on:
-  #     - db
-  #     - redis
+  celery:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web 
+    command: celery -A aiagentplatform worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+  
+  celery-beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web 
+    command: celery -A aiagentplatform beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
 
 volumes:
   postgres_data:

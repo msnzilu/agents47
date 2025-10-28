@@ -1,0 +1,312 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Upload Document - {{ agent.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Upload Document</h1>
+        <p class="text-gray-600 mt-2">Add knowledge to {{ agent.name }}</p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+            
+            <!-- Document Title -->
+            <div class="mb-6">
+                <label for="id_title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Document Title *
+                </label>
+                <input type="text" 
+                       name="title" 
+                       id="id_title" 
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="e.g., Company FAQ, Product Manual">
+                {% if form.title.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Document Type -->
+            <div class="mb-6">
+                <label for="id_document_type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Document Type *
+                </label>
+                <select name="document_type" 
+                        id="id_document_type" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Select document type...</option>
+                    <option value="text">Plain Text</option>
+                    <option value="pdf">PDF Document</option>
+                    <option value="docx">Word Document</option>
+                    <option value="csv">CSV File</option>
+                    <option value="json">JSON Data</option>
+                    <option value="html">HTML Content</option>
+                    <option value="markdown">Markdown</option>
+                </select>
+                {% if form.document_type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.document_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Upload Method Tabs -->
+            <div class="mb-6">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8">
+                        <button type="button" 
+                                onclick="showTab('file')"
+                                id="fileTab"
+                                class="tab-button border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600">
+                            Upload File
+                        </button>
+                        <button type="button" 
+                                onclick="showTab('text')"
+                                id="textTab"
+                                class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Paste Text
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div id="fileContent" class="mb-6">
+                <label for="id_file_path" class="block text-sm font-medium text-gray-700 mb-2">
+                    Choose File
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="id_file_path" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                <span>Upload a file</span>
+                                <input id="id_file_path" 
+                                       name="file_path" 
+                                       type="file" 
+                                       class="sr-only"
+                                       accept=".txt,.pdf,.docx,.csv,.json,.html,.md">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            PDF, DOCX, TXT, CSV, JSON up to 5MB
+                        </p>
+                        <div id="fileName" class="text-sm text-gray-700 font-medium mt-2"></div>
+                    </div>
+                </div>
+                {% if form.file_path.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.file_path.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Text Input -->
+            <div id="textContent" class="mb-6" style="display: none;">
+                <label for="id_content" class="block text-sm font-medium text-gray-700 mb-2">
+                    Document Content
+                </label>
+                <textarea name="content" 
+                          id="id_content" 
+                          rows="12"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                          placeholder="Paste your document content here..."></textarea>
+                {% if form.content.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.content.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="mb-6">
+                <button type="button" 
+                        onclick="toggleAdvanced()"
+                        class="flex items-center text-sm text-gray-700 hover:text-gray-900">
+                    <svg id="advancedIcon" class="w-5 h-5 mr-2 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    Advanced Settings
+                </button>
+                
+                <div id="advancedSettings" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Chunk Size -->
+                        <div>
+                            <label for="id_chunk_size" class="block text-sm font-medium text-gray-700 mb-2">
+                                Chunk Size
+                            </label>
+                            <input type="number" 
+                                   name="chunk_size" 
+                                   id="id_chunk_size" 
+                                   value="1000"
+                                   min="100"
+                                   max="4000"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="mt-1 text-xs text-gray-500">Characters per chunk (100-4000)</p>
+                        </div>
+                        
+                        <!-- Chunk Overlap -->
+                        <div>
+                            <label for="id_chunk_overlap" class="block text-sm font-medium text-gray-700 mb-2">
+                                Chunk Overlap
+                            </label>
+                            <input type="number" 
+                                   name="chunk_overlap" 
+                                   id="id_chunk_overlap" 
+                                   value="200"
+                                   min="0"
+                                   max="1000"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="mt-1 text-xs text-gray-500">Overlap between chunks (0-1000)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                        <p class="text-xs text-blue-800">
+                            <strong>Tip:</strong> Use case optimized defaults:
+                            <br>• Support: 500/100 (precise retrieval)
+                            <br>• Research: 1500/300 (more context)
+                            <br>• Knowledge: 1000/200 (balanced)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{% url 'agents:knowledge_base_list' agent.id %}" 
+                   class="text-gray-600 hover:text-gray-900">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Upload & Process
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Processing Information</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <p>Your document will be:</p>
+                    <ul class="list-disc list-inside mt-1 space-y-1">
+                        <li>Split into semantic chunks</li>
+                        <li>Embedded using {{ agent.get_use_case_display }} optimized settings</li>
+                        <li>Made searchable for AI-powered retrieval</li>
+                        <li>Available immediately after processing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    function showTab(tab) {
+        const fileContent = document.getElementById('fileContent');
+        const textContent = document.getElementById('textContent');
+        const fileTab = document.getElementById('fileTab');
+        const textTab = document.getElementById('textTab');
+        
+        if (tab === 'file') {
+            fileContent.style.display = 'block';
+            textContent.style.display = 'none';
+            fileTab.classList.add('border-blue-500', 'text-blue-600');
+            fileTab.classList.remove('border-transparent', 'text-gray-500');
+            textTab.classList.remove('border-blue-500', 'text-blue-600');
+            textTab.classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('id_content').removeAttribute('required');
+        } else {
+            fileContent.style.display = 'none';
+            textContent.style.display = 'block';
+            textTab.classList.add('border-blue-500', 'text-blue-600');
+            textTab.classList.remove('border-transparent', 'text-gray-500');
+            fileTab.classList.remove('border-blue-500', 'text-blue-600');
+            fileTab.classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('id_file_path').removeAttribute('required');
+        }
+    }
+    
+    // Advanced settings toggle
+    function toggleAdvanced() {
+        const settings = document.getElementById('advancedSettings');
+        const icon = document.getElementById('advancedIcon');
+        
+        if (settings.classList.contains('hidden')) {
+            settings.classList.remove('hidden');
+            icon.classList.add('rotate-90');
+        } else {
+            settings.classList.add('hidden');
+            icon.classList.remove('rotate-90');
+        }
+    }
+    
+    // File input display
+    document.getElementById('id_file_path').addEventListener('change', function(e) {
+        const fileName = document.getElementById('fileName');
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            fileName.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+        } else {
+            fileName.textContent = '';
+        }
+    });
+    
+    // Drag and drop
+    const dropZone = document.querySelector('[for="id_file_path"]').closest('.border-dashed');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+    
+    dropZone.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('id_file_path').files = files;
+        
+        // Trigger change event
+        const event = new Event('change');
+        document.getElementById('id_file_path').dispatchEvent(event);
+    }
+</script>
+{% endblock %}

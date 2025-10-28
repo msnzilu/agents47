@@ -16,15 +16,35 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ejfykh%3w6o)mpsrfsol367j7%-62f1sud4dn^j_fkvx*djldj'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 SITE_NAME = env('SITE_NAME')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+# ALLOWED_HOSTS = ['agents47.online', 'www.agents47.online']
 
 LOGIN_URL = '/users/login/'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+# CSRF trusted origins
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://agents47.online',
+#     'https://www.agents47.online',
+# ]
+# CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+CSRF_TRUSTED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 
 # Application definition
 
@@ -44,18 +64,23 @@ INSTALLED_APPS = [
     'chat',
     'agents',
     'integrations',
+    'api',
+    'embed',
+    'webhooks',
 
     # ======== External Apps ========
     'rest_framework',
     'channels',
     'celery',
-
+    'drf_spectacular',
+    'django_extensions'
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -96,6 +121,21 @@ DATABASES = {
     )
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': env('DB_NAME'),
+#         'USER': env('DB_USER'),
+#         'PASSWORD': env('DB_PASSWORD'),
+#         'HOST': env('DB_HOST', default='127.0.0.1'),
+#         'PORT': env('DB_PORT', default='3306'),
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#             'charset': 'utf8mb4',
+#         },
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -134,6 +174,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -159,8 +202,28 @@ CHANNEL_LAYERS = {
 }
 
 
-
 # =========API KEY CONFIGURATIONS ===============================
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
+
+# =============== REST Framework Configuration ===============
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+
+# ================ API Documentation ======================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Agents47 API',
+    'DESCRIPTION': 'REST API for managing AI agents and conversations',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 

@@ -42,17 +42,25 @@ class Conversation(models.Model):
         help_text=_('Session identifier for grouping related conversations')
     )
     
-    # Channel information (Phase 7 - omnichannel)
+    CHANNEL_CHOICES = [
+        ('web', 'Web Chat'),
+        ('api', 'API'),
+        ('email', 'Email'),
+        ('slack', 'Slack'),
+        ('sms', 'SMS'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+    
     channel = models.CharField(
-        max_length=50,
-        default='web',
-        choices=[
-            ('web', 'Web Chat'),
-            ('api', 'API'),
-            ('email', 'Email'),
-            ('slack', 'Slack'),
-            ('sms', 'SMS'),
-        ]
+        max_length=20,
+        choices=CHANNEL_CHOICES,
+        default='web'
+    )
+    
+    channel_identifier = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='External channel ID (email, phone, etc.)'
     )
 
     metadata = models.JSONField(

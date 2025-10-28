@@ -1,0 +1,200 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Setup LLM - {{ agent.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'agents:agent_detail' agent.pk %}" class="text-blue-600 hover:text-blue-800 inline-flex items-center text-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Agent
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+        <div class="flex items-center mb-6">
+            <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <div>
+                <h1 class="text-2xl font-bold">LLM Integration Setup</h1>
+                <p class="text-gray-600 text-sm">Configure AI providers for: <strong>{{ agent.name }}</strong></p>
+            </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div class="flex">
+                <svg class="w-5 h-5 text-blue-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="text-sm text-blue-700">
+                    <p class="font-medium mb-1">Your agent needs an LLM integration to function</p>
+                    <p>Add at least one provider (OpenAI or Anthropic) to enable chat functionality. Your API keys are stored securely and encrypted.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing Integrations -->
+        {% if existing_integrations %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-3">Current Integrations</h2>
+            <div class="space-y-3">
+                {% for integration in existing_integrations %}
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ integration.get_integration_type_display }}</h3>
+                            <div class="flex items-center space-x-3 text-sm text-gray-500 mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                    {% if integration.status == 'active' %}bg-green-100 text-green-800
+                                    {% elif integration.status == 'error' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ integration.get_status_display }}
+                                </span>
+                                <span>Added {{ integration.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'agents:agent_delete_integration' agent.pk integration.pk %}" 
+                          onsubmit="return confirm('Are you sure you want to remove this integration?');">
+                        {% csrf_token %}
+                        <button type="submit" class="text-red-600 hover:text-red-800 p-2" title="Remove integration">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Add New Integration Form -->
+        <div class="border-t pt-6">
+            <h2 class="text-lg font-semibold mb-4">Add New Integration</h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Select Provider *
+                    </label>
+                    <select name="provider" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">-- Choose a provider --</option>
+                        <option value="openai">OpenAI (GPT-4, GPT-4o-mini)</option>
+                        <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Select the AI provider you want to use
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        API Key *
+                    </label>
+                    <input 
+                        type="password" 
+                        name="api_key" 
+                        required 
+                        placeholder="sk-..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                    >
+                    <p class="text-xs text-gray-500 mt-1">
+                        🔒 Your API key will be stored securely and encrypted in our database
+                    </p>
+                </div>
+
+                <div class="flex gap-4">
+                    <button 
+                        type="submit" 
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium inline-flex items-center"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Integration
+                    </button>
+                    <a 
+                        href="{% url 'agents:agent_detail' agent.pk %}" 
+                        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                    >
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
+        <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Getting Your API Keys
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-green-600 font-bold text-sm">1</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">OpenAI</h4>
+                        <p class="text-sm text-gray-600 mb-2">Visit the OpenAI platform to create an API key</p>
+                        <a href="https://platform.openai.com/api-keys" target="_blank" 
+                           class="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center">
+                            platform.openai.com/api-keys
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                        <p class="text-xs text-gray-500 mt-2">💡 Models: GPT-4, GPT-4o-mini, GPT-3.5-turbo</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-purple-600 font-bold text-sm">2</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">Anthropic</h4>
+                        <p class="text-sm text-gray-600 mb-2">Get your Claude API key from the Anthropic console</p>
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" 
+                           class="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center">
+                            console.anthropic.com/settings/keys
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                        <p class="text-xs text-gray-500 mt-2">💡 Models: Claude 3.5 Sonnet, Claude 3 Opus</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+            <p class="text-yellow-800">
+                <strong>⚠️ Important:</strong> You can add multiple providers as fallback options. If one fails, the system will automatically try the next available provider.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

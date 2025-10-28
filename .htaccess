@@ -1,0 +1,207 @@
+# ==============================================================================
+# .htaccess for aiagentplatform Django App on Namecheap Shared Hosting
+# ==============================================================================
+# ⚠️ CRITICAL: Replace 'agenobhk' and '3.9' with YOUR actual values!
+#
+# Example:
+# If your username is 'agents47' and Python version is '3.10':
+# - Replace: /home/username/  →  /home/agents47/
+# - Replace: /3.9/  →  /3.10/
+# ==============================================================================
+
+
+# ==============================================================================
+# PASSENGER CONFIGURATION (Tells Apache how to run your Django app)
+# ==============================================================================
+
+# Enable Passenger (the application server)
+PassengerEnabled On
+
+# Your application root directory
+PassengerAppRoot /home/agenobhk/public_html/agents47
+
+# Python interpreter path (MUST match passenger_wsgi.py)
+PassengerPython /home/agenobhk/virtualenv/public_html/agents47/3.9/bin/python3
+
+# Startup file (your WSGI entry point)
+PassengerStartupFile passenger_wsgi.py
+
+# Set Django settings module
+SetEnv DJANGO_SETTINGS_MODULE aiagentplatform.settings
+
+# Set to production environment
+SetEnv DJANGO_ENV production
+
+
+# ==============================================================================
+# URL REWRITING (How requests are routed)
+# ==============================================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Force HTTPS - Redirect all HTTP to HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Serve static files directly (CSS, JS, images)
+    # Don't pass these to Django - Apache serves them directly for speed
+    RewriteCond %{REQUEST_URI} ^/static/ [NC]
+    RewriteRule ^(.*)$ - [L]
+    
+    # Serve media files directly (user uploads)
+    RewriteCond %{REQUEST_URI} ^/media/ [NC]
+    RewriteRule ^(.*)$ - [L]
+    
+    # Allow .well-known directory (needed for SSL certificate renewal)
+    RewriteCond %{REQUEST_URI} ^/\.well-known/
+    RewriteRule ^(.*)$ - [L]
+    
+    # Pass all other requests to Django
+    # If file doesn't exist, send to Django
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]
+</IfModule>
+
+
+# ==============================================================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ==============================================================================
+
+# Tell Apache where static files are located
+Alias /static /home/agenobhk/public_html/agents47/staticfiles
+
+<Directory /home/agenobhk/public_html/agents47/staticfiles>
+    # Allow everyone to access static files
+    Require all granted
+    
+    # Don't show directory listings
+    Options -Indexes
+    
+    # Enable gzip compression for faster loading
+    <IfModule mod_deflate.c>
+        AddOutputFilterByType DEFLATE text/css
+        AddOutputFilterByType DEFLATE text/javascript
+        AddOutputFilterByType DEFLATE application/javascript
+        AddOutputFilterByType DEFLATE application/json
+    </IfModule>
+    
+    # Browser caching - static files don't change often
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresByType text/css "access plus 1 year"
+        ExpiresByType application/javascript "access plus 1 year"
+        ExpiresByType image/jpeg "access plus 1 year"
+        ExpiresByType image/png "access plus 1 year"
+        ExpiresByType image/gif "access plus 1 year"
+        ExpiresByType image/svg+xml "access plus 1 year"
+        ExpiresByType image/webp "access plus 1 year"
+        ExpiresByType font/woff "access plus 1 year"
+        ExpiresByType font/woff2 "access plus 1 year"
+    </IfModule>
+</Directory>
+
+
+# ==============================================================================
+# MEDIA FILES (User Uploads)
+# ==============================================================================
+
+# Tell Apache where media files are located
+Alias /media /home/agenobhk/public_html/agents47/media
+
+<Directory /home/agenobhk/public_html/agents47/media>
+    # Allow everyone to access media files
+    Require all granted
+    
+    # Don't show directory listings (security)
+    Options -Indexes
+</Directory>
+
+
+# ==============================================================================
+# SECURITY - Protect Sensitive Files
+# ==============================================================================
+
+# Protect .env file - CRITICAL! Contains passwords and secrets
+<FilesMatch "^\.env$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect Python source files - prevent direct download
+<FilesMatch "\.(py|pyc|pyo)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect requirements.txt
+<FilesMatch "^requirements\.txt$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect Git files
+<FilesMatch "^\.git">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect configuration files
+<FilesMatch "^(\.htaccess|\.htpasswd)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+
+# ==============================================================================
+# PERFORMANCE OPTIMIZATION
+# ==============================================================================
+
+# Enable compression for HTML, CSS, JS
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+</IfModule>
+
+# Disable directory browsing (security)
+Options -Indexes
+
+# Hide Apache version (security)
+ServerSignature Off
+
+
+# ==============================================================================
+# CUSTOM ERROR PAGES (Optional)
+# ==============================================================================
+# Uncomment these if you create custom error pages
+
+# ErrorDocument 404 /404.html
+# ErrorDocument 500 /500.html
+# ErrorDocument 403 /403.html
+
+
+# ==============================================================================
+# CHECKLIST BEFORE GOING LIVE
+# ==============================================================================
+# [ ] Replace 'agenobhk' with your actual cPanel agenobhk (5 places)
+# [ ] Replace '3.9' with your actual Python version (1 place)
+# [ ] Verify paths point to 'aiagentplatform' not 'myproject'
+# [ ] File permissions: chmod 644 .htaccess
+# [ ] Test HTTPS redirect works
+# [ ] Test static files load: https://agents47.online/static/admin/css/base.css
+# [ ] Test media files work (if you have any)
+# [ ] Check .env file is protected (try accessing it - should get 403 Forbidden)
+# 
+# TO RESTART APP AFTER CHANGES:
+# mkdir -p tmp && touch tmp/restart.txt
+#
+# TO CHECK ERRORS:
+# tail -50 ~/logs/agents47.online-error_log
+# ==============================================================================

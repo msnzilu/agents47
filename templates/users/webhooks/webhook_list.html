@@ -1,0 +1,203 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Webhooks - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Webhooks</h1>
+            <p class="text-gray-600 mt-1">Receive real-time notifications for agent events</p>
+        </div>
+        <a href="{% url 'webhooks:webhook-create' %}" 
+           class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Create Webhook
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <p class="text-sm text-gray-600">Total Webhooks</p>
+            <p class="text-3xl font-bold text-gray-900">{{ total_webhooks }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <p class="text-sm text-gray-600">Active</p>
+            <p class="text-3xl font-bold text-green-600">{{ active_webhooks }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <p class="text-sm text-gray-600">Recent Deliveries</p>
+            <p class="text-3xl font-bold text-blue-600">{{ recent_deliveries }}</p>
+            <a href="{% url 'webhooks:webhook-deliveries' %}" class="text-xs text-blue-600 hover:text-blue-800 mt-1 inline-block">
+                View all →
+            </a>
+        </div>
+    </div>
+
+    <!-- Webhooks List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        {% if webhooks %}
+        <div class="divide-y divide-gray-200">
+            {% for webhook in webhooks %}
+            <div class="p-6 hover:bg-gray-50 transition">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ webhook.name }}</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if webhook.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {% if webhook.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                            <span class="inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                                {{ webhook.url|truncatechars:50 }}
+                            </span>
+                            {% if webhook.agent %}
+                            <span class="inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                {{ webhook.agent.name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            {% for event in webhook.events %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ event }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>{{ webhook.total_deliveries }} deliveries</span>
+                            <span>Success rate: <span class="{% if webhook.success_rate >= 90 %}text-green-600{% elif webhook.success_rate >= 70 %}text-yellow-600{% else %}text-red-600{% endif %} font-medium">{{ webhook.success_rate }}%</span></span>
+                            <span>Created {{ webhook.created_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 ml-4">
+                        <button onclick="toggleWebhook('{{ webhook.id }}')" 
+                                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition"
+                                title="{% if webhook.is_active %}Deactivate{% else %}Activate{% endif %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                        
+                        <button onclick="testWebhook('{{ webhook.id }}')" 
+                                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition"
+                                title="Test webhook">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </button>
+                        
+                        <a href="{% url 'webhooks:webhook-detail' webhook.id %}" 
+                           class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition"
+                           title="View details">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </a>
+                        
+                        <a href="{% url 'webhooks:webhook-edit' webhook.id %}" 
+                           class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition"
+                           title="Edit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </a>
+                        
+                        <form method="post" action="{% url 'webhooks:webhook-delete' webhook.id %}" 
+                              onsubmit="return confirm('Delete webhook {{ webhook.name }}?')" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition"
+                                    title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No webhooks</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new webhook.</p>
+            <div class="mt-6">
+                <a href="{% url 'webhooks:webhook-create' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Create Webhook
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleWebhook(webhookId) {
+    if (!confirm('Toggle webhook status?')) return;
+    
+    fetch(`/webhooks/${webhookId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to toggle webhook'));
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function testWebhook(webhookId) {
+    if (!confirm('Send test webhook?')) return;
+    
+    fetch(`/webhooks/test/${webhookId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message || 'Test webhook sent!');
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

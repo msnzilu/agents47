@@ -1,0 +1,35 @@
+<!-- File: templates/users/partials/messages_styles.html -->
+<!-- Minimal Professional Toast Styles -->
+
+<style>
+    /* Smooth shadow animation */
+    @keyframes shadow-pulse {
+        0%, 100% {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        50% {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 12px 15px -5px rgba(0, 0, 0, 0.05);
+        }
+    }
+    
+    /* Optional: subtle animation on hover */
+    .toast-container:hover {
+        animation: shadow-pulse 2s ease-in-out infinite;
+    }
+    
+    /* Ensure pointer events work correctly */
+    .pointer-events-none {
+        pointer-events: none;
+    }
+    
+    .pointer-events-auto {
+        pointer-events: auto;
+    }
+    
+    /* Better mobile responsiveness */
+    @media (max-width: 640px) {
+        .fixed.inset-0.pt-20 {
+            padding-top: 1rem;
+        }
+    }
+</style>

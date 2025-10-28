@@ -1,0 +1,247 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Privacy Policy - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Privacy Policy</h1>
+        <p class="text-gray-600">
+            <strong>Last Updated:</strong> {{ privacy_updated|default:"October 29, 2025" }}
+        </p>
+        <p class="text-gray-600 mt-2">
+            This Privacy Policy explains how {{ SITE_NAME }} ("we," "us," or "our") collects, uses, discloses, 
+            and protects your information when you use our AI Agent Platform service.
+        </p>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-8">
+        
+        <!-- Section 1 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                1. Information We Collect
+            </h2>
+            
+            <h3 class="text-xl font-medium text-gray-800 mt-6 mb-3">1.1 Information You Provide</h3>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Account Information:</strong> Name, email address, password, and optional profile details</li>
+                <li><strong>Agent Configurations:</strong> Agent names, descriptions, prompts, use case selections, and custom settings</li>
+                <li><strong>Knowledge Base Content:</strong> Documents, text, and files you upload for agent training</li>
+                <li><strong>Conversation Data:</strong> Messages, queries, and interactions with your AI agents</li>
+                <li><strong>Integration Data:</strong> API keys, webhook URLs, and third-party service credentials you provide</li>
+                <li><strong>Payment Information:</strong> Processed securely through third-party payment processors (we do not store full credit card details)</li>
+            </ul>
+
+            <h3 class="text-xl font-medium text-gray-800 mt-6 mb-3">1.2 Automatically Collected Information</h3>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Usage Data:</strong> Agent interactions, API calls, feature usage, and performance metrics</li>
+                <li><strong>Log Data:</strong> IP addresses, browser type, device information, operating system, and access times</li>
+                <li><strong>Cookies and Tracking:</strong> Session cookies, authentication tokens, and analytics cookies</li>
+                <li><strong>Technical Data:</strong> Error logs, crash reports, and system performance data</li>
+            </ul>
+        </section>
+
+        <!-- Section 2 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                2. How We Use Your Information
+            </h2>
+            <p class="text-gray-700 mb-4">We use the collected information for the following purposes:</p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Service Delivery:</strong> To provide, maintain, and improve our AI agent platform</li>
+                <li><strong>Agent Functionality:</strong> To train, customize, and operate your AI agents</li>
+                <li><strong>Communication:</strong> To send service updates, security alerts, and support messages</li>
+                <li><strong>Analytics:</strong> To analyze usage patterns and optimize platform performance</li>
+                <li><strong>Security:</strong> To detect, prevent, and address fraud, abuse, and security issues</li>
+                <li><strong>Compliance:</strong> To comply with legal obligations and enforce our Terms of Service</li>
+                <li><strong>Personalization:</strong> To customize your experience and provide relevant recommendations</li>
+            </ul>
+        </section>
+
+        <!-- Section 3 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                3. AI and Third-Party Processing
+            </h2>
+            
+            <h3 class="text-xl font-medium text-gray-800 mt-6 mb-3">3.1 AI Service Providers</h3>
+            <p class="text-gray-700 mb-3">
+                We use third-party AI services (OpenAI, Anthropic) to power agent responses. Your conversation 
+                data may be processed by these providers according to their privacy policies:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li>OpenAI Privacy Policy: <a href="https://openai.com/privacy" class="text-blue-600 hover:underline" target="_blank">https://openai.com/privacy</a></li>
+                <li>Anthropic Privacy Policy: <a href="https://www.anthropic.com/privacy" class="text-blue-600 hover:underline" target="_blank">https://www.anthropic.com/privacy</a></li>
+            </ul>
+            <p class="text-gray-700 italic">
+                Note: We do not use your data to train third-party AI models. API-based processing is used solely for providing real-time responses.
+            </p>
+
+            <h3 class="text-xl font-medium text-gray-800 mt-6 mb-3">3.2 Other Third-Party Services</h3>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Cloud Hosting:</strong> AWS/Heroku/Render for infrastructure</li>
+                <li><strong>Analytics:</strong> Mixpanel/Google Analytics for usage insights</li>
+                <li><strong>Error Tracking:</strong> Sentry for monitoring and debugging</li>
+                <li><strong>Integrations:</strong> Services you connect (CRM, calendar, email) per your configurations</li>
+            </ul>
+        </section>
+
+        <!-- Section 4 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                4. Data Sharing and Disclosure
+            </h2>
+            <p class="text-gray-700 mb-4">We do not sell your personal information. We may share data in the following circumstances:</p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>With Your Consent:</strong> When you explicitly authorize sharing (e.g., integrations you enable)</li>
+                <li><strong>Service Providers:</strong> With trusted vendors who assist in platform operations (under strict confidentiality)</li>
+                <li><strong>Legal Requirements:</strong> When required by law, court order, or government request</li>
+                <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
+                <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users or the public</li>
+            </ul>
+        </section>
+
+        <!-- Section 5 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                5. Data Storage and Security
+            </h2>
+            <p class="text-gray-700 mb-4">We implement industry-standard security measures:</p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li>Encrypted data transmission (TLS/SSL)</li>
+                <li>Encrypted data storage for sensitive information</li>
+                <li>Secure database access with role-based permissions</li>
+                <li>Regular security audits and vulnerability assessments</li>
+                <li>API key and webhook URL encryption</li>
+                <li>Rate limiting and abuse prevention mechanisms</li>
+            </ul>
+            <p class="text-gray-700 mt-4">
+                <strong>Data Retention:</strong> We retain your data as long as your account is active or as needed to provide services. 
+                You may request deletion at any time (see Section 7).
+            </p>
+        </section>
+
+        <!-- Section 6 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                6. International Data Transfers
+            </h2>
+            <p class="text-gray-700">
+                Your information may be transferred to and processed in countries other than your own. We ensure 
+                appropriate safeguards are in place, including:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700 mt-3">
+                <li>Standard contractual clauses approved by regulatory authorities</li>
+                <li>Data processing agreements with all third-party providers</li>
+                <li>Compliance with GDPR, CCPA, and other applicable privacy laws</li>
+            </ul>
+        </section>
+
+        <!-- Section 7 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                7. Your Privacy Rights
+            </h2>
+            <p class="text-gray-700 mb-4">Depending on your jurisdiction, you may have the following rights:</p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Access:</strong> Request a copy of your personal data</li>
+                <li><strong>Rectification:</strong> Correct inaccurate or incomplete data</li>
+                <li><strong>Deletion:</strong> Request deletion of your data ("right to be forgotten")</li>
+                <li><strong>Portability:</strong> Receive your data in a structured, machine-readable format</li>
+                <li><strong>Restriction:</strong> Limit how we process your data</li>
+                <li><strong>Objection:</strong> Object to processing based on legitimate interests</li>
+                <li><strong>Opt-Out:</strong> Unsubscribe from marketing communications</li>
+            </ul>
+            <p class="text-gray-700 mt-4">
+                To exercise these rights, contact us at <a href="mailto:privacy@{{ SITE_DOMAIN }}" class="text-blue-600 hover:underline">privacy@{{ SITE_DOMAIN|default:"yourplatform.com" }}</a> 
+                or use the account settings page.
+            </p>
+        </section>
+
+        <!-- Section 8 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                8. Cookies and Tracking Technologies
+            </h2>
+            <p class="text-gray-700 mb-4">We use the following types of cookies:</p>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Essential Cookies:</strong> Required for authentication and core functionality</li>
+                <li><strong>Analytics Cookies:</strong> Help us understand usage patterns and improve the platform</li>
+                <li><strong>Preference Cookies:</strong> Remember your settings and choices</li>
+            </ul>
+            <p class="text-gray-700 mt-4">
+                You can control cookies through your browser settings. Note that disabling essential cookies may affect platform functionality.
+            </p>
+        </section>
+
+        <!-- Section 9 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                9. Children's Privacy
+            </h2>
+            <p class="text-gray-700">
+                Our service is not intended for users under 18 years of age. We do not knowingly collect information 
+                from children. If you believe we have inadvertently collected data from a minor, please contact us immediately 
+                at <a href="mailto:privacy@{{ SITE_DOMAIN }}" class="text-blue-600 hover:underline">privacy@{{ SITE_DOMAIN|default:"yourplatform.com" }}</a>.
+            </p>
+        </section>
+
+        <!-- Section 10 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                10. Changes to This Policy
+            </h2>
+            <p class="text-gray-700">
+                We may update this Privacy Policy periodically. We will notify you of material changes via email or 
+                a prominent notice on our platform. Your continued use after changes constitutes acceptance of the updated policy.
+            </p>
+        </section>
+
+        <!-- Section 11 -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2">
+                11. Contact Us
+            </h2>
+            <p class="text-gray-700 mb-4">
+                If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
+            </p>
+            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <p class="text-gray-800"><strong>{{ SITE_NAME }}</strong></p>
+                <p class="text-gray-700 mt-2">Email: <a href="mailto:privacy@{{ SITE_DOMAIN }}" class="text-blue-600 hover:underline">privacy@{{ SITE_DOMAIN|default:"yourplatform.com" }}</a></p>
+                <p class="text-gray-700">Support: <a href="mailto:support@{{ SITE_DOMAIN }}" class="text-blue-600 hover:underline">support@{{ SITE_DOMAIN|default:"yourplatform.com" }}</a></p>
+                <p class="text-gray-700 mt-2">Address: [Your Business Address]</p>
+            </div>
+        </section>
+
+        <!-- GDPR/CCPA Specific -->
+        <section class="bg-blue-50 rounded-lg p-6 border border-blue-200">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">For EU/EEA Users (GDPR)</h3>
+            <p class="text-gray-700 mb-2">
+                Our legal basis for processing: Consent, contract performance, legitimate interests, and legal compliance.
+            </p>
+            <p class="text-gray-700">
+                You have the right to lodge a complaint with your local data protection authority.
+            </p>
+            
+            <h3 class="text-lg font-semibold text-blue-900 mt-6 mb-3">For California Users (CCPA)</h3>
+            <p class="text-gray-700">
+                California residents have additional rights under the CCPA, including the right to know what personal 
+                information is collected and the right to opt-out of sale (we do not sell data). Contact us to exercise your rights.
+            </p>
+        </section>
+    </div>
+
+    <!-- Back to Top Button -->
+    <div class="mt-8 text-center">
+        <a href="#" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+            </svg>
+            Back to Top
+        </a>
+    </div>
+</div>
+{% endblock %}

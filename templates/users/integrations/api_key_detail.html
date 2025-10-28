@@ -1,0 +1,54 @@
+{% extends 'users/base.html' %}
+{% block title %}{{ api_key.name }} Details - {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <!-- Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-gray-800">{{ api_key.name }}</h1>
+      <div class="flex space-x-2">
+        <a href="{% url 'integrations:api_key_list' %}" class="btn btn-secondary">Back to API Keys</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Key Details -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <dl class="space-y-2">
+      <dt class="text-sm font-medium text-gray-500">Name</dt>
+      <dd class="text-sm text-gray-900">{{ api_key.name }}</dd>
+      <dt class="text-sm font-medium text-gray-500">Key</dt>
+      <dd class="text-sm text-gray-900">
+        {% if show_full_key %}
+          {{ api_key.key }}
+          <p class="text-sm text-red-600 mt-1">Copy this key now. It will not be shown again.</p>
+        {% else %}
+          {{ api_key.key|slice:":8" }}...
+        {% endif %}
+      </dd>
+      <dt class="text-sm font-medium text-gray-500">Scopes</dt>
+      <dd class="text-sm text-gray-900">{{ api_key.scopes|join:", " }}</dd>
+      <dt class="text-sm font-medium text-gray-500">Rate Limit</dt>
+      <dd class="text-sm text-gray-900">{{ api_key.rate_limit }} requests/hour</dd>
+      <dt class="text-sm font-medium text-gray-500">Active</dt>
+      <dd class="text-sm text-gray-900">{{ api_key.is_active|yesno:"Yes,No" }}</dd>
+      {% if api_key.last_used_at %}
+        <dt class="text-sm font-medium text-gray-500">Last Used</dt>
+        <dd class="text-sm text-gray-900">{{ api_key.last_used_at|date:"SHORT_DATE_FORMAT" }} {{ api_key.last_used_at|time:"TIME_FORMAT" }}</dd>
+      {% endif %}
+      <dt class="text-sm font-medium text-gray-500">Usage Count</dt>
+      <dd class="text-sm text-gray-900">{{ api_key.usage_count }}</dd>
+      {% if api_key.expires_at %}
+        <dt class="text-sm font-medium text-gray-500">Expires</dt>
+        <dd class="text-sm text-gray-900">{{ api_key.expires_at|date:"SHORT_DATE_FORMAT" }} {{ api_key.expires_at|time:"TIME_FORMAT" }}</dd>
+      {% endif %}
+    </dl>
+    <div class="mt-4 flex justify-end">
+      <form action="{% url 'integrations:api_key_delete' pk=api_key.id %}" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this API key?');">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

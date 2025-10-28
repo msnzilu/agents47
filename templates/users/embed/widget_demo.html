@@ -1,0 +1,311 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Widget Demo - {{ agent.name }} - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'agents:agent_detail' agent.id %}" 
+           class="text-blue-600 hover:text-blue-800 inline-flex items-center text-sm mb-4">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Agent
+        </a>
+        
+        <h1 class="text-3xl font-bold text-gray-900">Embed {{ agent.name }} on Your Website</h1>
+        <p class="mt-2 text-gray-600">Add a live chat widget to any website with just a few lines of code</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Column: Instructions -->
+        <div class="space-y-6">
+            <!-- Quick Start -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Quick Start
+                </h2>
+                
+                <ol class="space-y-4">
+                    <li class="flex items-start">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm mr-3 flex-shrink-0">1</span>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">Copy the embed code</p>
+                            <p class="text-sm text-gray-600 mt-1">Choose between basic or customized version below</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm mr-3 flex-shrink-0">2</span>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">Paste before closing &lt;/body&gt; tag</p>
+                            <p class="text-sm text-gray-600 mt-1">Add the code to your website's HTML</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm mr-3 flex-shrink-0">3</span>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">That's it!</p>
+                            <p class="text-sm text-gray-600 mt-1">The chat widget will appear automatically</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Basic Embed Code -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Basic Embed Code</h3>
+                <p class="text-sm text-gray-600 mb-4">Simple one-line integration with default settings</p>
+                
+                <div class="relative">
+                    <pre class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm"><code>{{ basic_embed }}</code></pre>
+                    <button onclick="copyCode('basic')" 
+                            class="absolute top-2 right-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition-colors">
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom Embed Code -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Customized Embed Code</h3>
+                <p class="text-sm text-gray-600 mb-4">Full control over theme, colors, and positioning</p>
+                
+                <div class="relative">
+                    <pre class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm"><code>{{ custom_embed }}</code></pre>
+                    <button onclick="copyCode('custom')" 
+                            class="absolute top-2 right-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition-colors">
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Customization Options -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Customization Options</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium text-gray-900 text-sm mb-2">theme</h4>
+                        <p class="text-sm text-gray-600">Set to <code class="bg-gray-100 px-2 py-0.5 rounded">'light'</code> or <code class="bg-gray-100 px-2 py-0.5 rounded">'dark'</code></p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 text-sm mb-2">primaryColor</h4>
+                        <p class="text-sm text-gray-600">Any hex color code (e.g., <code class="bg-gray-100 px-2 py-0.5 rounded">'#4F46E5'</code>)</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 text-sm mb-2">position</h4>
+                        <p class="text-sm text-gray-600">Set to <code class="bg-gray-100 px-2 py-0.5 rounded">'left'</code> or <code class="bg-gray-100 px-2 py-0.5 rounded">'right'</code></p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 text-sm mb-2">greeting</h4>
+                        <p class="text-sm text-gray-600">Custom greeting message in the tooltip</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JavaScript API -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">JavaScript API</h3>
+                <p class="text-sm text-gray-600 mb-4">Control the widget programmatically</p>
+                
+                <div class="space-y-3">
+                    <div class="bg-gray-50 rounded p-3">
+                        <code class="text-sm text-gray-900">AIAgentWidgetAPI.open()</code>
+                        <p class="text-xs text-gray-600 mt-1">Open the chat widget</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded p-3">
+                        <code class="text-sm text-gray-900">AIAgentWidgetAPI.close()</code>
+                        <p class="text-xs text-gray-600 mt-1">Close the chat widget</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded p-3">
+                        <code class="text-sm text-gray-900">AIAgentWidgetAPI.toggle()</code>
+                        <p class="text-xs text-gray-600 mt-1">Toggle widget open/closed</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded p-3">
+                        <code class="text-sm text-gray-900">AIAgentWidgetAPI.isOpen()</code>
+                        <p class="text-xs text-gray-600 mt-1">Check if widget is open</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded p-3">
+                    <p class="text-sm text-blue-900">
+                        <strong>Example:</strong> Open widget when a button is clicked
+                    </p>
+                    <pre class="mt-2 text-xs text-blue-800"><code>&lt;button onclick="AIAgentWidgetAPI.open()"&gt;
+  Chat with us
+&lt;/button&gt;</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Preview -->
+        <div class="space-y-6 lg:sticky lg:top-6 lg:self-start">
+            <!-- Preview Controls -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Live Preview</h2>
+                
+                <div class="space-y-4">
+                    <!-- Theme Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                        <div class="flex gap-2">
+                            <button onclick="updatePreview('theme', 'light')" 
+                                    id="theme-light"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors active-theme">
+                                ☀️ Light
+                            </button>
+                            <button onclick="updatePreview('theme', 'dark')" 
+                                    id="theme-dark"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                🌙 Dark
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Color Picker -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                        <div class="flex gap-2">
+                            <input type="color" 
+                                   id="colorPicker" 
+                                   value="#4F46E5" 
+                                   onchange="updatePreview('color', this.value)"
+                                   class="w-16 h-10 border border-gray-300 rounded cursor-pointer">
+                            <input type="text" 
+                                   id="colorText" 
+                                   value="#4F46E5" 
+                                   onchange="updatePreview('color', this.value)"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm">
+                        </div>
+                    </div>
+                    
+                    <!-- Position Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                        <div class="flex gap-2">
+                            <button onclick="updatePreview('position', 'left')" 
+                                    id="position-left"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                ⬅️ Left
+                            </button>
+                            <button onclick="updatePreview('position', 'right')" 
+                                    id="position-right"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors active-theme">
+                                ➡️ Right
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Open Widget Button -->
+                    <button onclick="openPreviewWidget()" 
+                            class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        🚀 Open Widget Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Window -->
+            <div class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg border border-gray-300 p-6 relative overflow-hidden" style="height: 500px;">
+                <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <p class="text-lg font-medium">Widget Preview</p>
+                        <p class="text-sm mt-1">Click "Open Widget Preview" above</p>
+                    </div>
+                </div>
+                
+                <!-- Preview will be injected here -->
+                <div id="widgetPreview"></div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-green-900">Widget Features</h3>
+                        <ul class="mt-2 text-sm text-green-800 space-y-1">
+                            <li>✓ Fully responsive design</li>
+                            <li>✓ Mobile-friendly interface</li>
+                            <li>✓ Real-time messaging</li>
+                            <li>✓ Unread message badges</li>
+                            <li>✓ Customizable appearance</li>
+                            <li>✓ No account required for visitors</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let previewSettings = {
+        theme: 'light',
+        color: '#4F46E5',
+        position: 'right'
+    };
+
+    function updatePreview(setting, value) {
+        previewSettings[setting] = value;
+        
+        // Update UI
+        if (setting === 'theme') {
+            document.getElementById('theme-light').classList.toggle('active-theme', value === 'light');
+            document.getElementById('theme-dark').classList.toggle('active-theme', value === 'dark');
+        } else if (setting === 'position') {
+            document.getElementById('position-left').classList.toggle('active-theme', value === 'left');
+            document.getElementById('position-right').classList.toggle('active-theme', value === 'right');
+        } else if (setting === 'color') {
+            document.getElementById('colorPicker').value = value;
+            document.getElementById('colorText').value = value;
+        }
+    }
+
+    function openPreviewWidget() {
+        const url = `{{ base_url }}/embed/chat/{{ agent.id }}/?theme=${previewSettings.theme}&color=${encodeURIComponent(previewSettings.color)}`;
+        window.open(url, 'widgetPreview', 'width=400,height=600,scrollbars=yes');
+    }
+
+    function copyCode(type) {
+        const code = type === 'basic' ? `{{ basic_embed }}` : `{{ custom_embed }}`;
+        
+        navigator.clipboard.writeText(code).then(() => {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-600');
+            }, 2000);
+        });
+    }
+</script>
+
+<style>
+    .active-theme {
+        background-color: #EEF2FF;
+        border-color: #4F46E5;
+        color: #4F46E5;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

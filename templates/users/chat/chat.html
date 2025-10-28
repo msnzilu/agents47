@@ -1,4 +1,5 @@
 {% extends 'users/base.html' %}
+{% load static %}
 
 {% block title %}Chat with {{ agent.name }} - AI Agent Platform{% endblock %}
 
@@ -40,6 +41,36 @@
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Streaming message styles */
+    .streaming-message {
+        position: relative;
+    }
+    .streaming-message::after {
+        content: '▋';
+        animation: blink 1s infinite;
+        margin-left: 2px;
+    }
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+    
+    /* Connection status colors */
+    .status-connected {
+        background-color: #10b981;
+    }
+    .status-disconnected {
+        background-color: #ef4444;
+    }
+    .status-reconnecting {
+        background-color: #f59e0b;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
     }
 </style>
 {% endblock %}
@@ -168,21 +199,23 @@
                         {% csrf_token %}
                         <div class="flex-1 relative">
                             <textarea 
-                                   id="message-input"
-                                   name="content" 
-                                   placeholder="Type your message..." 
-                                   rows="1"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                   {% if not can_send_messages %}disabled{% endif %}
-                                   maxlength="5000"></textarea>
+                                id="message-input"
+                                name="content" 
+                                placeholder="Type your message..." 
+                                rows="1"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                {% if not can_send_messages %}disabled{% endif %}
+                            ></textarea>
                             <span class="absolute bottom-2 right-2 text-xs text-gray-400">
                                 <span id="char-count">0</span>/5000
                             </span>
                         </div>
-                        <button type="submit" 
-                                id="send-button"
-                                {% if not can_send_messages %}disabled{% endif %}
-                                class="{% if can_send_messages %}bg-blue-600 hover:bg-blue-700{% else %}bg-gray-400 cursor-not-allowed{% endif %} text-white px-6 py-3 rounded-lg transition">
+                        <button 
+                            type="submit" 
+                            id="send-button"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            {% if not can_send_messages %}disabled{% endif %}
+                        >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                             </svg>
@@ -193,88 +226,119 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- WebSocket and Chat JavaScript -->
+{% block extra_js %}
+<!-- WebSocket Manager -->
+<script src="{% static 'js/websocket-manager.js' %}?v=2"></script>
+
 <script>
-    const conversationId = "{{ conversation.id }}";
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}{{ ws_url }}`;
-    const currentUser = "{{ request.user.username }}";
-    let chatSocket = null;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
+    // Configuration
+    const conversationId = {{ conversation.id }};
+    const currentUser = '{{ request.user.email }}';
     
-    // Initialize WebSocket connection
+    console.log('clearMessages defined, type:', typeof clearMessages);
+    
+    // Make it globally accessible (just to be sure)
+    window.clearMessages = clearMessages;
+    console.log('window.clearMessages:', typeof window.clearMessages);
+    
+    // Initialize WebSocket Manager
+    let wsManager = null;
+    let typingTimeout = null;
+    
+    // Initialize WebSocket
     function initWebSocket() {
-        chatSocket = new WebSocket(wsUrl);
+        console.log('[Chat] Initializing WebSocket for conversation:', conversationId);
         
-        chatSocket.onopen = function(e) {
-            console.log('WebSocket connected');
-            updateConnectionStatus('online');
-            reconnectAttempts = 0;
-        };
+        wsManager = new WebSocketManager(conversationId, {
+            onConnect: handleConnect,
+            onDisconnect: handleDisconnect,
+            onMessage: handleMessage,
+            onStreamStart: handleStreamStart,
+            onStreamToken: handleStreamToken,
+            onStreamEnd: handleStreamEnd,
+            onTyping: handleTyping,
+            onError: handleError
+        });
         
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            handleIncomingMessage(data);
-        };
-        
-        chatSocket.onclose = function(e) {
-            console.log('WebSocket disconnected');
-            updateConnectionStatus('offline');
-            
-            // Auto-reconnect with exponential backoff
-            if (reconnectAttempts < maxReconnectAttempts) {
-                const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-                setTimeout(() => {
-                    reconnectAttempts++;
-                    initWebSocket();
-                }, timeout);
-            }
-        };
-        
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket error:', e);
-            updateConnectionStatus('error');
-        };
+        wsManager.connect();
     }
     
-    // Update connection status indicator
-    function updateConnectionStatus(status) {
+    // Handle connection
+    function handleConnect() {
+        console.log('[Chat] Connected to WebSocket');
+        updateConnectionStatus('connected', 'Connected');
+    }
+    
+    // Handle disconnection
+    function handleDisconnect(event) {
+        console.log('[Chat] Disconnected from WebSocket');
+        updateConnectionStatus('disconnected', 'Disconnected');
+    }
+    
+    // Handle incoming messages
+    function handleMessage(data) {
+        console.log('[Chat] Message received:', data);
+        
+        if (data.type === 'message') {
+            const isCurrentUser = data.message.user_id === '{{ request.user.id }}';
+            addMessageToChat(data.message, isCurrentUser);
+        } else if (data.type === 'message_sent') {
+            updateMessageStatus(data.temp_id, data.message_id);
+        }
+    }
+    
+    // Handle stream start
+    function handleStreamStart(data) {
+        console.log('[Chat] Stream starting:', data.message_id);
+        hideTypingIndicator();
+        createStreamingMessage(data.message_id);
+    }
+    
+    // Handle stream token
+    function handleStreamToken(data) {
+        updateStreamingMessage(data.message_id, data.accumulated);
+    }
+    
+    // Handle stream end
+    function handleStreamEnd(data) {
+        console.log('[Chat] Stream ended:', data.message_id);
+        finalizeStreamingMessage(data.message_id, data.timestamp);
+    }
+    
+    // Handle typing indicator
+    function handleTyping(data) {
+        if (data.type === 'agent_typing') {
+            if (data.is_typing) {
+                showTypingIndicator();
+            } else {
+                hideTypingIndicator();
+            }
+        }
+    }
+    
+    // Handle errors
+    function handleError(error) {
+        console.error('[Chat] WebSocket error:', error);
+    }
+    
+    // Update connection status UI
+    function updateConnectionStatus(status, text) {
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-        const statusContainer = document.getElementById('connection-status');
         
-        switch(status) {
-            case 'online':
-                statusDot.className = 'w-2 h-2 bg-green-500 rounded-full mr-2';
-                statusText.textContent = 'Online';
-                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
-                break;
-            case 'offline':
-                statusDot.className = 'w-2 h-2 bg-gray-500 rounded-full mr-2';
-                statusText.textContent = 'Offline';
-                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800';
-                break;
-            case 'error':
-                statusDot.className = 'w-2 h-2 bg-red-500 rounded-full mr-2';
-                statusText.textContent = 'Error';
-                statusContainer.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
-                break;
+        statusDot.className = 'w-2 h-2 rounded-full mr-2';
+        
+        if (status === 'connected') {
+            statusDot.classList.add('status-connected');
+        } else if (status === 'disconnected') {
+            statusDot.classList.add('status-disconnected');
+        } else if (status === 'reconnecting' || status === 'connecting') {
+            statusDot.classList.add('status-reconnecting');
         }
-    }
-    
-    // Handle incoming WebSocket messages
-    function handleIncomingMessage(data) {
-        if (data.type === 'chat_message') {
-            addMessageToChat(data.message, data.user === currentUser);
-            hideTypingIndicator();
-        } else if (data.type === 'typing') {
-            if (data.user !== currentUser) {
-                showTypingIndicator();
-            }
-        } else if (data.type === 'stop_typing') {
-            hideTypingIndicator();
-        }
+        
+        statusText.textContent = text;
     }
     
     // Add message to chat UI
@@ -290,16 +354,12 @@
         messageDiv.className = `message-item message-fade-in flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`;
         messageDiv.dataset.messageId = message.id || Date.now();
         
-        const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit', 
-            hour12: true 
-        }) : 'Just now';
+        const timestamp = message.created_at ? formatTimestamp(message.created_at) : 'Just now';
         
         messageDiv.innerHTML = `
             <div class="max-w-[70%]">
                 <div class="${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-3">
-                    <p class="text-sm whitespace-pre-wrap">${escapeHtml(message.content || message)}</p>
+                    <p class="text-sm whitespace-pre-wrap">${escapeHtml(message.content)}</p>
                 </div>
                 <div class="flex items-center mt-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}">
                     <p class="text-xs text-gray-500">${timestamp}</p>
@@ -309,16 +369,63 @@
         `;
         
         messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        scrollToBottom();
+    }
+    
+    // Create streaming message placeholder
+    function createStreamingMessage(messageId) {
+        const messagesContainer = document.getElementById('messages-container');
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-item message-fade-in flex justify-start';
+        messageDiv.id = `streaming-${messageId}`;
+        messageDiv.dataset.messageId = messageId;
+        
+        messageDiv.innerHTML = `
+            <div class="max-w-[70%]">
+                <div class="bg-gray-100 text-gray-900 rounded-lg px-4 py-3">
+                    <p class="text-sm whitespace-pre-wrap streaming-message" id="stream-content-${messageId}"></p>
+                </div>
+                <div class="flex items-center mt-1 justify-start">
+                    <p class="text-xs text-gray-500">Streaming...</p>
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    // Update streaming message
+    function updateStreamingMessage(messageId, content) {
+        const contentElement = document.getElementById(`stream-content-${messageId}`);
+        if (contentElement) {
+            contentElement.textContent = content;
+            scrollToBottom();
+        }
+    }
+    
+    // Finalize streaming message
+    function finalizeStreamingMessage(messageId, timestamp) {
+        const messageDiv = document.getElementById(`streaming-${messageId}`);
+        if (messageDiv) {
+            const contentElement = document.getElementById(`stream-content-${messageId}`);
+            if (contentElement) {
+                contentElement.classList.remove('streaming-message');
+            }
+            
+            const timeElement = messageDiv.querySelector('.text-xs.text-gray-500');
+            if (timeElement) {
+                timeElement.textContent = formatTimestamp(timestamp);
+            }
+        }
     }
     
     // Show/hide typing indicator
     function showTypingIndicator() {
         const indicator = document.getElementById('typing-indicator');
         indicator.classList.remove('hidden');
-        
-        const messagesContainer = document.getElementById('messages-container');
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        scrollToBottom();
     }
     
     function hideTypingIndicator() {
@@ -329,7 +436,6 @@
     // Handle message form submission
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
     const charCount = document.getElementById('char-count');
     
     // Auto-resize textarea
@@ -339,71 +445,72 @@
         charCount.textContent = this.value.length;
         
         // Send typing indicator
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            chatSocket.send(JSON.stringify({
-                'type': 'typing',
-                'user': currentUser
-            }));
+        if (wsManager && wsManager.isConnected() && this.value.trim()) {
+            if (typingTimeout) clearTimeout(typingTimeout);
+            
+            wsManager.sendTyping(true);
+            
+            typingTimeout = setTimeout(() => {
+                wsManager.sendTyping(false);
+            }, 1000);
         }
     });
     
+    // Form submission
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const content = messageInput.value.trim();
         if (!content) return;
         
-        // Send via WebSocket if connected
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            chatSocket.send(JSON.stringify({
-                'type': 'chat_message',
-                'message': content
-            }));
+        if (content.length > 5000) {
+            alert('Message is too long (max 5000 characters)');
+            return;
+        }
+        
+        // Send via WebSocket
+        if (wsManager && wsManager.isConnected()) {
+            const tempId = 'temp-' + Date.now();
+            wsManager.sendMessage(content, tempId);
             
             // Clear input
             messageInput.value = '';
             messageInput.style.height = 'auto';
             charCount.textContent = '0';
         } else {
-            // Fallback to AJAX
-            sendMessageViaAjax(content);
+            alert('Not connected to server. Please wait...');
         }
     });
     
-    // Fallback AJAX message sending
-    function sendMessageViaAjax(content) {
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: `content=${encodeURIComponent(content)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                addMessageToChat({
-                    content: content,
-                    timestamp: data.timestamp
-                }, true);
-                
-                // Clear input
-                messageInput.value = '';
-                messageInput.style.height = 'auto';
-                charCount.textContent = '0';
-            } else {
-                alert('Failed to send message. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to send message. Please try again.');
+    // Utility functions
+    function scrollToBottom() {
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
         });
     }
     
-    // Clear messages function
+    function updateMessageStatus(tempId, messageId) {
+        const tempMessage = document.querySelector(`[data-message-id="${tempId}"]`);
+        if (tempMessage) {
+            tempMessage.dataset.messageId = messageId;
+        }
+    }
+    
+    // // Clear messages
     function clearMessages() {
         if (confirm('Are you sure you want to clear all messages from this view?')) {
             const messagesContainer = document.getElementById('messages-container');
@@ -419,29 +526,31 @@
         }
     }
     
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    // Auto-scroll to bottom of messages on load
-    const messagesContainer = document.getElementById('messages-container');
-    if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-    
-    // Initialize WebSocket connection if enabled
-    {% if can_send_messages %}
-    initWebSocket();
-    {% endif %}
-    
-    // Handle Enter key for sending (Shift+Enter for new line)
+    // Handle Enter key
     messageInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             messageForm.dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        scrollToBottom();
+        initWebSocket();
+
+        //Attach clear messages button handler AFTER DOM is ready
+        const clearBtn = document.getElementById('clear-messages-btn');
+        console.log('Button found:', btn);
+        if (clearBtn) {
+            clearBtn.addEventListener('click', clearMessages);
+        }
+    });
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (wsManager) {
+            wsManager.disconnect();
         }
     });
 </script>

@@ -14,6 +14,7 @@ from .forms import AgentCreateForm, AgentUpdateForm, AgentCloneForm
 from chat.models import Conversation
 from .tasks import process_knowledge_base_task
 import logging
+from notifications.services import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -181,8 +182,15 @@ class AgentCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         """Set the user before saving."""
         form.instance.user = self.request.user
-        messages.success(self.request, f'Agent "{form.instance.name}" created successfully!')
-        return super().form_valid(form)
+        
+        # Save the agent first - this sets self.object
+        response = super().form_valid(form)
+        
+        # Now self.object exists and has the agent with user
+        NotificationService.notify_agent_created(self.object)
+        
+        messages.success(self.request, f'Agent "{self.object.name}" created successfully!')
+        return response
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -231,6 +239,7 @@ class AgentDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         agent_name = self.get_object().name
+        NotificationService.notify_agent_deleted(self.object)
         messages.success(request, f'Agent "{agent_name}" deleted successfully!')
         return super().delete(request, *args, **kwargs)
 

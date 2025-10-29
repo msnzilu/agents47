@@ -1,0 +1,360 @@
+{% extends 'users/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Analytics Dashboard - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p class="text-gray-600 mt-1">Performance insights and metrics</p>
+        </div>
+        
+        <!-- Date Range Filter -->
+        <div class="flex gap-2">
+            <select id="dateRange" class="px-4 py-2 border rounded-lg" onchange="window.location.href='?range='+this.value">
+                <option value="24h" {% if date_range == '24h' %}selected{% endif %}>Last 24 Hours</option>
+                <option value="7d" {% if date_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30d" {% if date_range == '30d' %}selected{% endif %}>Last 30 Days</option>
+                <option value="90d" {% if date_range == '90d' %}selected{% endif %}>Last 90 Days</option>
+            </select>
+            
+            <a href="{% url 'analytics:export_metrics' %}?format=csv&range={{ date_range }}" 
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Export
+            </a>
+        </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Agents -->
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Agents</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ metrics.total_agents }}</p>
+                    <p class="text-sm text-green-600 mt-2">
+                        <span class="font-semibold">{{ metrics.active_agents }}</span> active
+                    </p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Conversations -->
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Conversations</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ metrics.total_conversations }}</p>
+                    <p class="text-sm text-gray-500 mt-2">
+                        {{ metrics.total_messages }} messages
+                    </p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total API Calls -->
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">API Calls</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ metrics.total_api_calls|default:0 }}</p>
+                    <p class="text-sm {% if metrics.success_rate >= 95 %}text-green-600{% else %}text-yellow-600{% endif %} mt-2">
+                        {{ metrics.success_rate|floatformat:1 }}% success
+                    </p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Cost -->
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Cost</p>
+                    <p class="text-3xl font-bold text-gray-900">${{ metrics.total_cost|floatformat:2 }}</p>
+                    <p class="text-sm text-gray-500 mt-2">
+                        {{ metrics.total_tokens|default:0|intcomma }} tokens
+                    </p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Executions Timeline -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Agent Executions</h3>
+            <canvas id="executionsChart" height="200"></canvas>
+        </div>
+
+        <!-- Token Usage Timeline -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Token Usage</h3>
+            <canvas id="tokensChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Cost & Response Time -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Cost Timeline -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Cost Over Time</h3>
+            <canvas id="costChart" height="200"></canvas>
+        </div>
+
+        <!-- Response Time -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Average Response Time</h3>
+            <div class="flex items-center justify-center h-48">
+                <div class="text-center">
+                    <p class="text-5xl font-bold text-gray-900">{{ metrics.avg_response_time|floatformat:0 }}</p>
+                    <p class="text-gray-600 mt-2">milliseconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Performance Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Agent Performance</h3>
+            <a href="{% url 'analytics:performance_monitor' %}" class="text-blue-600 hover:text-blue-700 text-sm">
+                View Real-time Monitor →
+            </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Agent</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Use Case</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Executions</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Avg Response</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Success Rate</th>
+                        <th class="text-center py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in metrics.top_agents %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-gray-900">{{ agent.name }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                {{ agent.use_case|title }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right text-gray-900">
+                            {{ agent.execution_count|default:0 }}
+                        </td>
+                        <td class="py-3 px-4 text-right text-gray-600">
+                            {{ agent.avg_response_time|default:0|floatformat:0 }}ms
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <span class="{% if agent.success_rate >= 95 %}text-green-600{% elif agent.success_rate >= 80 %}text-yellow-600{% else %}text-red-600{% endif %} font-medium">
+                                {{ agent.success_rate|default:0|floatformat:1 }}%
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <a href="{% url 'analytics:agent_analytics' agent.id %}" 
+                               class="text-blue-600 hover:text-blue-700 text-sm">
+                                View Details →
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            No agent data available for this time period
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="{% url 'analytics:log_viewer' %}" 
+           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-gray-100 rounded-lg">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Log Viewer</h4>
+                    <p class="text-sm text-gray-600">Browse system logs</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'analytics:performance_monitor' %}" 
+           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Performance Monitor</h4>
+                    <p class="text-sm text-gray-600">Real-time metrics</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'analytics:export_metrics' %}?format=csv&range=30d" 
+           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">Export Data</h4>
+                    <p class="text-sm text-gray-600">Download reports</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<script>
+// Chart.js configurations
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineLabels = {{ timeline_labels|safe }};
+    const timelineExecutions = {{ timeline_executions|safe }};
+    const timelineTokens = {{ timeline_tokens|safe }};
+    const timelineCosts = {{ timeline_costs|safe }};
+
+    // Executions Chart
+    new Chart(document.getElementById('executionsChart'), {
+        type: 'line',
+        data: {
+            labels: timelineLabels,
+            datasets: [{
+                label: 'Executions',
+                data: timelineExecutions,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Tokens Chart
+    new Chart(document.getElementById('tokensChart'), {
+        type: 'bar',
+        data: {
+            labels: timelineLabels,
+            datasets: [{
+                label: 'Tokens',
+                data: timelineTokens,
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Cost Chart
+    new Chart(document.getElementById('costChart'), {
+        type: 'line',
+        data: {
+            labels: timelineLabels,
+            datasets: [{
+                label: 'Cost ($)',
+                data: timelineCosts,
+                borderColor: 'rgb(251, 191, 36)',
+                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

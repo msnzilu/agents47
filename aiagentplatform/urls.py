@@ -26,7 +26,8 @@ urlpatterns = [
     path('webhooks/', include('webhooks.urls')),
     path('api/', include('api.urls')),
     path('embed/', include('embed.urls')),
-    # path('analytics/', include('analytics.urls')),
+    path('analytics/', include('analytics.urls')),
+    path('notifications/', include('notifications.urls')),
     
     # =================================== Health check endpoint ==================================================
     path('health/', TemplateView.as_view(template_name='health.html'), name='health'),

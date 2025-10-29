@@ -1,0 +1,281 @@
+{% extends 'users/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ agent.name }} Analytics - {{ SITE_NAME }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{% url 'analytics:dashboard' %}" class="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block">
+            ← Back to Dashboard
+        </a>
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ agent.name }}</h1>
+                <p class="text-gray-600 mt-1">{{ agent.description }}</p>
+                <span class="inline-block mt-2 px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800">
+                    {{ agent.get_use_case_display }}
+                </span>
+            </div>
+            
+            <!-- Date Range -->
+            <select id="dateRange" class="px-4 py-2 border rounded-lg" onchange="window.location.href='?range='+this.value">
+                <option value="24h" {% if date_range == '24h' %}selected{% endif %}>Last 24 Hours</option>
+                <option value="7d" {% if date_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30d" {% if date_range == '30d' %}selected{% endif %}>Last 30 Days</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Total Executions</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.total_executions }}</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Unique Users</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.unique_users }}</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Avg Response Time</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.avg_response_time|floatformat:0 }}ms</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Success Rate</p>
+            <p class="text-2xl font-bold {% if stats.success_rate >= 95 %}text-green-600{% else %}text-yellow-600{% endif %} mt-1">
+                {{ stats.success_rate|floatformat:1 }}%
+            </p>
+        </div>
+    </div>
+
+    <!-- Use Case Specific Metrics -->
+    {% if use_case_metrics %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ agent.get_use_case_display }} Metrics</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% if agent.use_case == 'support' %}
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Resolution Rate</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.resolution_rate|floatformat:1 }}%</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Escalation Rate</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.escalation_rate|floatformat:1 }}%</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Avg Sentiment</p>
+                    <p class="text-3xl font-bold {% if use_case_metrics.avg_sentiment > 0 %}text-green-600{% elif use_case_metrics.avg_sentiment < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                        {{ use_case_metrics.avg_sentiment|floatformat:2 }}
+                    </p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Avg Satisfaction</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.avg_satisfaction|floatformat:1 }}/5</p>
+                </div>
+            {% elif agent.use_case == 'research' %}
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Total Searches</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.total_searches }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Summaries Generated</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.total_summaries }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Data Extractions</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ use_case_metrics.data_extractions }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Performance Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Executions Over Time</h3>
+            <canvas id="executionsChart" height="250"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Response Time Trend</h3>
+            <canvas id="responseTimeChart" height="250"></canvas>
+        </div>
+    </div>
+
+    <!-- Token Usage & Cost -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Token Usage</h3>
+            <canvas id="tokensChart" height="250"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Cost Analysis</h3>
+            <canvas id="costChart" height="250"></canvas>
+        </div>
+    </div>
+
+    <!-- Performance Data Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Performance</h3>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Executions</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Avg Response</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Tokens</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Cost</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-700">Error Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for perf in performance_data %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-gray-900">{{ perf.date|date:"M d, Y" }}</td>
+                        <td class="py-3 px-4 text-right text-gray-900">{{ perf.execution_count }}</td>
+                        <td class="py-3 px-4 text-right text-gray-600">{{ perf.avg_response_time_ms|floatformat:0 }}ms</td>
+                        <td class="py-3 px-4 text-right text-gray-600">
+                            {{ perf.total_input_tokens|add:perf.total_output_tokens|intcomma }}
+                        </td>
+                        <td class="py-3 px-4 text-right text-gray-600">${{ perf.total_cost|floatformat:4 }}</td>
+                        <td class="py-3 px-4 text-right">
+                            <span class="{% if perf.error_rate < 0.05 %}text-green-600{% elif perf.error_rate < 0.15 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ perf.error_rate|floatformat:1 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            No performance data available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineData = {{ timeline_data|safe }};
+    
+    const labels = timelineData.map(d => d.date);
+    const executions = timelineData.map(d => d.executions);
+    const responseTimes = timelineData.map(d => d.response_time);
+    const tokens = timelineData.map(d => d.tokens);
+    const costs = timelineData.map(d => d.cost);
+
+    // Executions Chart
+    new Chart(document.getElementById('executionsChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Executions',
+                data: executions,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Response Time Chart
+    new Chart(document.getElementById('responseTimeChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Response Time (ms)',
+                data: responseTimes,
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Tokens Chart
+    new Chart(document.getElementById('tokensChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tokens',
+                data: tokens,
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Cost Chart
+    new Chart(document.getElementById('costChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cost ($)',
+                data: costs,
+                borderColor: 'rgb(251, 191, 36)',
+                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(4);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

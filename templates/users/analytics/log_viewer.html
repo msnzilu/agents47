@@ -1,0 +1,170 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Log Viewer - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{% url 'analytics:dashboard' %}" class="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block">
+            ← Back to Dashboard
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900">System Logs</h1>
+        <p class="text-gray-600 mt-1">Browse and filter system logs</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Log Level Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Log Level</label>
+                <select name="level" class="w-full px-4 py-2 border rounded-lg">
+                    <option value="">All Levels</option>
+                    {% for value, label in log_levels %}
+                    <option value="{{ value }}" {% if selected_level == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Agent Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Agent</label>
+                <select name="agent" class="w-full px-4 py-2 border rounded-lg">
+                    <option value="">All Agents</option>
+                    {% for agent in agents %}
+                    <option value="{{ agent.id }}" {% if selected_agent == agent.id|stringformat:"s" %}selected{% endif %}>
+                        {{ agent.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                <input type="date" name="date" value="{{ selected_date }}" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Filter Logs
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 bg-gray-50">
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Level</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Logger</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Message</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Agent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" 
+                        onclick="toggleLogDetails('log-{{ log.id }}')">
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            {{ log.created_at|date:"M d, H:i:s" }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                {% if log.level == 'CRITICAL' or log.level == 'ERROR' %}bg-red-100 text-red-800
+                                {% elif log.level == 'WARNING' %}bg-yellow-100 text-yellow-800
+                                {% elif log.level == 'INFO' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ log.level }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700 font-mono">
+                            {{ log.logger_name }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-900">
+                            {{ log.message|truncatewords:15 }}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600">
+                            {% if log.agent %}
+                                <a href="{% url 'analytics:agent_analytics' log.agent.id %}" 
+                                   class="text-blue-600 hover:text-blue-700"
+                                   onclick="event.stopPropagation()">
+                                    {{ log.agent.name }}
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <!-- Expandable Details Row -->
+                    <tr id="log-{{ log.id }}" class="hidden bg-gray-50">
+                        <td colspan="5" class="py-4 px-4">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="font-semibold text-gray-700">Full Message:</span>
+                                    <pre class="mt-1 p-3 bg-white border rounded text-sm">{{ log.message }}</pre>
+                                </div>
+                                
+                                {% if log.exception_class %}
+                                <div>
+                                    <span class="font-semibold text-gray-700">Exception:</span>
+                                    <pre class="mt-1 p-3 bg-white border rounded text-sm text-red-600">{{ log.exception_class }}: {{ log.exception_message }}</pre>
+                                </div>
+                                {% endif %}
+                                
+                                {% if log.stack_trace %}
+                                <div>
+                                    <span class="font-semibold text-gray-700">Stack Trace:</span>
+                                    <pre class="mt-1 p-3 bg-white border rounded text-sm overflow-x-auto">{{ log.stack_trace }}</pre>
+                                </div>
+                                {% endif %}
+                                
+                                {% if log.metadata %}
+                                <div>
+                                    <span class="font-semibold text-gray-700">Metadata:</span>
+                                    <pre class="mt-1 p-3 bg-white border rounded text-sm">{{ log.metadata|safe }}</pre>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500">
+                            No logs found matching the selected filters
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-sm text-blue-800">
+            <strong>Tip:</strong> Click on any log row to view full details including stack traces and metadata.
+            Logs are retained for 30 days.
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleLogDetails(logId) {
+    const detailsRow = document.getElementById(logId);
+    if (detailsRow.classList.contains('hidden')) {
+        detailsRow.classList.remove('hidden');
+    } else {
+        detailsRow.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

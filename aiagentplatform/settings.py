@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
 
     # ==== Local Apps ==========
     'myadmin',
@@ -67,6 +68,8 @@ INSTALLED_APPS = [
     'api',
     'embed',
     'webhooks',
+    'analytics',
+    'notifications',
 
     # ======== External Apps ========
     'rest_framework',

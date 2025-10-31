@@ -75,7 +75,7 @@ marshmallow==3.26.1
 msgpack==1.1.2
 multidict==6.7.0
 mypy_extensions==1.1.0
-# mysqlclient==2.2.7
+mysqlclient==2.2.7
 numpy==2.3.4
 oauthlib==3.3.1
 openai==2.5.0
@@ -127,7 +127,7 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 uvicorn==0.38.0
-#uvloop==0.22.1
+uvloop==0.22.1
 vine==5.1.0
 watchfiles==1.1.1
 wcwidth==0.2.14

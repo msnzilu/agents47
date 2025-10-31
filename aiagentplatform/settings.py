@@ -93,6 +93,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
     # ================= Custom Middleware ============
     'security.middleware.SecurityHeadersMiddleware',        # Add security headers
     'security.middleware.RateLimitMiddleware',              # Rate limiting

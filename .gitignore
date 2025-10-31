@@ -2,4 +2,5 @@
 .venv/
 .htaccess
 .env
+.env.example
 .vs/

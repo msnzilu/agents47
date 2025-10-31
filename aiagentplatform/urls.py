@@ -28,6 +28,7 @@ urlpatterns = [
     path('embed/', include('embed.urls')),
     path('analytics/', include('analytics.urls')),
     path('notifications/', include('notifications.urls')),
+    path('security/', include('security.urls')),
     
     # =================================== Health check endpoint ==================================================
     path('health/', TemplateView.as_view(template_name='health.html'), name='health'),

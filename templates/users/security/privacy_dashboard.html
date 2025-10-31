@@ -1,0 +1,286 @@
+﻿{% extends "users/base.html" %}
+
+{% block title %}Privacy & Data Management{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <h1 class="text-3xl font-bold mb-8">Privacy & Data Management</h1>
+
+    <!-- GDPR Rights -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Export Your Data</h3>
+            <p class="text-gray-600 text-sm mb-4">
+                Download a copy of all your data in machine-readable format (GDPR Article 15)
+            </p>
+            <button onclick="requestDataExport()"
+                    class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Request Data Export
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Manage Consent</h3>
+            <p class="text-gray-600 text-sm mb-4">
+                Control how your data is used and processed (GDPR Article 7)
+            </p>
+            <button onclick="showConsentModal()"
+                    class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Manage Consent
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Delete Your Data</h3>
+            <p class="text-gray-600 text-sm mb-4">
+                Request permanent deletion of your account and data (GDPR Article 17)
+            </p>
+            <button onclick="requestDataDeletion()"
+                    class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Request Deletion
+            </button>
+        </div>
+    </div>
+
+    <!-- Export Requests -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Data Export Requests</h2>
+        {% if export_requests %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for request in export_requests %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ request.requested_at|date:"M d, Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if request.status == 'completed' %}bg-green-100 text-green-800
+                                {% elif request.status == 'processing' %}bg-blue-100 text-blue-800
+                                {% elif request.status == 'failed' %}bg-red-100 text-red-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ request.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if request.expires_at %}{{ request.expires_at|date:"M d, Y" }}{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if request.status == 'completed' %}
+                            <a href="{% url 'security:data_export_download' request.id %}" class="text-blue-600 hover:text-blue-800">Download</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-600">No export requests yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Deletion Requests -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Data Deletion Requests</h2>
+        {% if deletion_requests %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviewed By</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for request in deletion_requests %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ request.requested_at|date:"M d, Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if request.status == 'completed' %}bg-gray-100 text-gray-800
+                                {% elif request.status == 'approved' %}bg-green-100 text-green-800
+                                {% elif request.status == 'rejected' %}bg-red-100 text-red-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ request.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if request.reviewed_by %}{{ request.reviewed_by.email }}{% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-600">No deletion requests.</p>
+        {% endif %}
+    </div>
+
+    <!-- Consent Records -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Consent History</h2>
+        {% if consent_records %}
+        <div class="space-y-2">
+            {% for consent in consent_records %}
+            <div class="flex items-center justify-between py-2 border-b">
+                <div>
+                    <span class="font-medium">{{ consent.get_consent_type_display }}</span>
+                    <span class="text-sm text-gray-600 ml-2">v{{ consent.version }}</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-600 mr-4">{{ consent.timestamp|date:"M d, Y H:i" }}</span>
+                    {% if consent.consented %}
+                    <span class="text-green-600">✓ Granted</span>
+                    {% else %}
+                    <span class="text-red-600">✗ Revoked</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600">No consent records.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Consent Modal -->
+<div id="consentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-semibold mb-4">Manage Consent</h3>
+        <form id="consentForm">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="marketing" class="mr-2">
+                    <span>Marketing Communications</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="analytics" class="mr-2" checked>
+                    <span>Analytics & Cookies</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" name="third_party" class="mr-2">
+                    <span>Third-Party Data Sharing</span>
+                </label>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="closeConsentModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function requestDataExport() {
+    if (!confirm('Request a data export? You will receive an email when it\'s ready.')) return;
+
+    try {
+        const response = await fetch("{% url 'security:data_export_request' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Data export requested successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to request export'));
+        }
+    } catch (error) {
+        alert('An error occurred. Please try again.');
+    }
+}
+
+async function requestDataDeletion() {
+    const reason = prompt('Please provide a reason for deletion (optional):');
+    if (reason === null) return;
+
+    if (!confirm('WARNING: This will permanently delete your account and all data. This action cannot be undone. Continue?')) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('reason', reason);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        const response = await fetch("{% url 'security:data_deletion_request' %}", {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Deletion request submitted for review.');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to request deletion'));
+        }
+    } catch (error) {
+        alert('An error occurred. Please try again.');
+    }
+}
+
+function showConsentModal() {
+    document.getElementById('consentModal').classList.remove('hidden');
+}
+
+function closeConsentModal() {
+    document.getElementById('consentModal').classList.add('hidden');
+}
+
+document.getElementById('consentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    // Add consent preferences
+    const checkboxes = this.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        formData.append('consent_type', cb.name);
+        formData.append('consented', cb.checked ? 'true' : 'false');
+    });
+
+    try {
+        const response = await fetch("{% url 'security:consent_management' %}", {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Consent preferences saved!');
+            closeConsentModal();
+            location.reload();
+        } else {
+            alert('Error saving preferences');
+        }
+    } catch (error) {
+        alert('An error occurred. Please try again.');
+    }
+});
+</script>
+{% endblock %}

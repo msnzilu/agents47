@@ -4,8 +4,28 @@
 
 {% block content %}
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-    <p class="text-gray-600 mt-1">Welcome back, {{ user.get_display_name }}!</p>
+    <div class="flex items-center justify-between mb-2">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+    </div>
+    <p class="text-gray-600">Welcome back, {{ user.get_display_name }}!</p>
+
+    {% if show_2fa_alert %}
+    <div class="mt-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div class="flex-1">
+                <p class="text-sm text-amber-800">
+                    <span class="font-medium">Security recommendation:</span>
+                    <a href="{% url 'security:2fa_setup' %}" class="underline hover:text-amber-900 font-medium">
+                        Enable two-factor authentication
+                    </a> to protect your account.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Stats Overview -->

@@ -127,7 +127,7 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 uvicorn==0.38.0
-uvloop==0.22.1
+#uvloop==0.22.1
 vine==5.1.0
 watchfiles==1.1.1
 wcwidth==0.2.14
@@ -136,4 +136,10 @@ xxhash==3.6.0
 yarl==1.22.0
 zope.interface==8.0.1
 zstandard==0.25.0
+django-extensions
+pyotp
+qrcode
+Pillow
+bleach
+
 

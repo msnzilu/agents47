@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# TOOL REGISTRY (Enhanced for Phase 6)
+# TOOL REGISTRY 
 # ============================================================================
 
 class ToolRegistry:

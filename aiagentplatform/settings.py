@@ -21,6 +21,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 SITE_NAME = env('SITE_NAME')
+SITE_DOMAIN=env('SITE_DOMAIN')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 # ALLOWED_HOSTS = ['agents47.online', 'www.agents47.online']
@@ -70,6 +71,7 @@ INSTALLED_APPS = [
     'webhooks',
     'analytics',
     'notifications',
+    'security',
 
     # ======== External Apps ========
     'rest_framework',
@@ -91,6 +93,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # ================= Custom Middleware ============
+    'security.middleware.SecurityHeadersMiddleware',        # Add security headers
+    'security.middleware.RateLimitMiddleware',              # Rate limiting
+    'security.middleware.SessionTimeoutMiddleware',         # Session timeout
+    'security.middleware.CSRFTokenRotationMiddleware',      # CSRF rotation (optional)
+    'security.middleware.RequestLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'aiagentplatform.urls'
@@ -156,6 +164,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {'NAME': 'security.validators.PasswordStrengthValidator'},
+    {'NAME': 'security.validators.PasswordHistoryValidator', 'OPTIONS': {'history_count': 5}},
+]
+
+AUTHENTICATION_BACKENDS = [
+    'security.validators.TwoFactorAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 

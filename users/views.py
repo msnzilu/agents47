@@ -188,6 +188,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Calculate statistics
         total_agents = Agent.objects.filter(user=user).count()
         total_conversations = Conversation.objects.filter(agent__user=user).count()
+        show_2fa_alert = not (
+            hasattr(self.request.user, 'two_factor_auth') and 
+            self.request.user.two_factor_auth.is_enabled
+        )
         
         # Get agents by use case
         use_case_breakdown = Agent.objects.filter(user=user).values(
@@ -196,6 +200,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         context.update({
             'agents': agents,
+            'show_2fa_alert':show_2fa_alert,
             'recent_conversations': recent_conversations,
             'total_agents': total_agents,
             'total_conversations': total_conversations,

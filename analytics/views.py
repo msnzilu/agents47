@@ -21,6 +21,9 @@ from .models import (
 )
 from .services import AnalyticsService
 
+import logging 
+logger = logging.getLogger(__name__)
+
 
 
 class AnalyticsDashboardView(LoginRequiredMixin, TemplateView):

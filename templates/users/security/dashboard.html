@@ -1,0 +1,135 @@
+﻿{% extends "users/base.html" %}
+
+{% block title %}Security Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <h1 class="text-3xl font-bold mb-8">Security Dashboard</h1>
+
+    <!-- Security Recommendations -->
+    {% if recommendations %}
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">Security Recommendations</h2>
+        <div class="space-y-4">
+            {% for rec in recommendations %}
+            <div class="border-l-4 p-4 {% if rec.severity == 'high' %}border-red-500 bg-red-50{% else %}border-yellow-500 bg-yellow-50{% endif %}">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        {% if rec.severity == 'high' %}
+                        <svg class="h-6 w-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        {% else %}
+                        <svg class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-lg font-medium">{{ rec.title }}</h3>
+                        <p class="mt-1 text-sm">{{ rec.description }}</p>
+                        <a href="{{ rec.action_url }}" class="mt-2 inline-block text-blue-600 hover:text-blue-800">Take Action →</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Security Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- 2FA Status -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Two-Factor Auth</h3>
+                {% if 2fa_enabled %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Enabled
+                </span>
+                {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    Disabled
+                </span>
+                {% endif %}
+            </div>
+            <p class="text-gray-600 text-sm mb-4">
+                {% if 2fa_enabled %}
+                Your account is protected with two-factor authentication.
+                {% else %}
+                Enable 2FA for extra security on your account.
+                {% endif %}
+            </p>
+            {% if 2fa_enabled %}
+            <a href="{% url 'security:2fa_setup' %}" class="text-blue-600 hover:text-blue-800 text-sm">Manage 2FA →</a>
+            {% else %}
+            <a href="{% url 'security:2fa_setup' %}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Enable 2FA
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+            <div class="space-y-2">
+                {% for login in recent_logins|slice:":3" %}
+                <div class="flex items-center text-sm">
+                    {% if login.success %}
+                    <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    {% else %}
+                    <svg class="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                    {% endif %}
+                    <span class="text-gray-700">{{ login.timestamp|date:"M d, Y H:i" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{% url 'security:activity' %}" class="mt-4 inline-block text-blue-600 hover:text-blue-800 text-sm">View All Activity →</a>
+        </div>
+
+        <!-- OAuth Connections -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Connected Accounts</h3>
+            {% if oauth_connections %}
+            <div class="space-y-2">
+                {% for conn in oauth_connections %}
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-700">{{ conn.get_provider_display }}</span>
+                    <span class="text-green-600">✓ Connected</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-600 text-sm">No connected accounts</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'security:2fa_setup' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow">
+                <h3 class="font-semibold mb-2">Setup 2FA</h3>
+                <p class="text-sm text-gray-600">Configure two-factor authentication</p>
+            </a>
+            <a href="{% url 'security:activity' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow">
+                <h3 class="font-semibold mb-2">View Activity</h3>
+                <p class="text-sm text-gray-600">Check your login history</p>
+            </a>
+            <a href="{% url 'security:privacy_dashboard' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow">
+                <h3 class="font-semibold mb-2">Privacy Settings</h3>
+                <p class="text-sm text-gray-600">Manage your data and privacy</p>
+            </a>
+            <a href="{% url 'security:api_keys' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow">
+                <h3 class="font-semibold mb-2">API Keys</h3>
+                <p class="text-sm text-gray-600">Manage your API access keys</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

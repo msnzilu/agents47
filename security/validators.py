@@ -416,14 +416,15 @@ class TwoFactorAuthBackend(ModelBackend):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            LoginAttempt.record_attempt(
-                email=email,
-                ip_address=ip_address,
-                success=False,
-                user_agent=user_agent,
-                failure_reason='Invalid email'
-            )
-            return None
+           if email: 
+                LoginAttempt.record_attempt(
+                    email=email,
+                    ip_address=ip_address,
+                    success=False,
+                    user_agent=user_agent,
+                    failure_reason='Invalid email'
+                )
+           return None
         
         # Check password
         if not user.check_password(password):

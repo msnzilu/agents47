@@ -1,35 +1,65 @@
+# Use a slightly larger image to get precompiled libs and faster builds
 FROM python:3.12-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+# Prevent Python from writing .pyc files and buffer output
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system build dependencies first
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     gcc \
-    postgresql-client \
+    g++ \
     libpq-dev \
+    libffi-dev \
+    postgresql-client \
+    curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements
 COPY requirements.txt /app/
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
 
-# Copy project
+# Upgrade pip and build tools FIRST
+RUN pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1 wheel==0.43.0
+
+# STRATEGY: Install the slowest/heaviest packages first separately
+# This way if something fails, we know exactly what, and successful layers are cached
+
+# Install numpy first (many packages depend on it)
+RUN pip install --no-cache-dir --prefer-binary --timeout 1000 numpy==2.3.4
+
+# Install heavy ML package
+RUN pip install --no-cache-dir --prefer-binary --timeout 1000 sentence-transformers
+
+# Install Twisted (can be slow to compile)
+RUN pip install --no-cache-dir --prefer-binary --timeout 1000 Twisted==25.5.0
+
+# Install lxml (requires compilation)
+RUN pip install --no-cache-dir --prefer-binary --timeout 1000 lxml==6.0.2
+
+# Install cryptography (heavy)
+RUN pip install --no-cache-dir --prefer-binary --timeout 1000 cryptography==46.0.3
+
+# Now install everything else from requirements.txt
+# The packages above will be skipped (already installed), making this much faster
+RUN pip install --no-cache-dir --prefer-binary --timeout 2000 -r requirements.txt
+
+# Now copy the rest of your app (this step invalidates cache only when code changes)
 COPY . /app/
 
 # Create static and media directories
 RUN mkdir -p /app/static /app/media /app/logs /app/staticfiles
 
-# Expose port
+# Expose Django default port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD python manage.py makemigrations --noinput && \
-    python manage.py migrate --noinput && \
-    python manage.py collectstatic --noinput --clear && \
-    python manage.py runserver 0.0.0.0:8000
+# Collect static files and apply migrations at container startup
+CMD python3 manage.py makemigrations --noinput && \
+    python3 manage.py migrate --noinput && \
+    python3 manage.py collectstatic --noinput --clear

@@ -1,0 +1,316 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Agent Marketplace - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg p-8 mb-8">
+    <div class="max-w-4xl">
+        <h1 class="text-4xl font-bold mb-3">🛒 Agent Marketplace</h1>
+        <p class="text-xl text-blue-100 mb-6">
+            Discover, purchase, and deploy pre-built AI agents for your business
+        </p>
+        <div class="flex space-x-4">
+            <a href="{% url 'agents:marketplace-create' %}" 
+               class="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition">
+                📦 Sell Your Agent
+            </a>
+            <a href="#how-it-works" 
+               class="inline-flex items-center px-6 py-3 border-2 border-white text-white rounded-lg hover:bg-white hover:text-blue-600 font-semibold transition">
+                Learn More
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Banner -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold text-blue-600">{{ total_listings }}</div>
+        <div class="text-sm text-gray-600">Active Listings</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold text-green-600">{{ total_sales|default:0 }}</div>
+        <div class="text-sm text-gray-600">Total Sales</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold text-purple-600">{{ featured_count }}</div>
+        <div class="text-sm text-gray-600">Featured Agents</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold text-orange-600">{{ avg_rating|floatformat:1|default:"5.0" }}</div>
+        <div class="text-sm text-gray-600">Avg Rating</div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <form method="get" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search Agents</label>
+                <input type="text" name="q" value="{{ request.GET.q }}" 
+                       placeholder="Search by name, description, or category..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select name="category" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Categories</option>
+                    {% for cat_code, cat_name in categories %}
+                        <option value="{{ cat_code }}" {% if request.GET.category == cat_code %}selected{% endif %}>
+                            {{ cat_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Price Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                <select name="price" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Prices</option>
+                    <option value="free" {% if request.GET.price == 'free' %}selected{% endif %}>Free</option>
+                    <option value="0-50" {% if request.GET.price == '0-50' %}selected{% endif %}>$0 - $50</option>
+                    <option value="50-200" {% if request.GET.price == '50-200' %}selected{% endif %}>$50 - $200</option>
+                    <option value="200+" {% if request.GET.price == '200+' %}selected{% endif %}>$200+</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Additional Filters -->
+        <div class="flex items-center space-x-4 text-sm">
+            <label class="flex items-center">
+                <input type="checkbox" name="featured" value="1" 
+                       {% if request.GET.featured %}checked{% endif %}
+                       class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-gray-700">Featured Only</span>
+            </label>
+            <label class="flex items-center">
+                <input type="checkbox" name="verified" value="1" 
+                       {% if request.GET.verified %}checked{% endif %}
+                       class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-gray-700">Verified Sellers</span>
+            </label>
+        </div>
+
+        <!-- Sort and Actions -->
+        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+            <div class="flex items-center space-x-2">
+                <label class="text-sm text-gray-700">Sort by:</label>
+                <select name="sort" 
+                        class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option value="popular" {% if request.GET.sort == 'popular' or not request.GET.sort %}selected{% endif %}>Most Popular</option>
+                    <option value="recent" {% if request.GET.sort == 'recent' %}selected{% endif %}>Recently Added</option>
+                    <option value="price-low" {% if request.GET.sort == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if request.GET.sort == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                </select>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'agents:marketplace-list' %}" 
+                   class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg">
+                    Clear Filters
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Featured Agents -->
+{% if featured_listings %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">⭐ Featured Agents</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for listing in featured_listings %}
+        <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg shadow-sm border-2 border-purple-200 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-600 text-white">
+                        ⭐ FEATURED
+                    </span>
+                    {% if listing.verified_seller %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✓ Verified
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ listing.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ listing.description }}</p>
+                
+                <div class="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                    <div class="flex items-center">
+                        <span class="text-yellow-500 mr-1">★</span>
+                        <span class="font-medium">{{ listing.average_rating|floatformat:1 }}</span>
+                    </div>
+                    <div>{{ listing.total_sales }} sales</div>
+                    <div>{{ listing.get_category_display }}</div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        {% if listing.pricing_type == 'free' %}
+                        <span class="text-2xl font-bold text-green-600">FREE</span>
+                        {% else %}
+                        <span class="text-2xl font-bold text-gray-900">${{ listing.price }}</span>
+                        <span class="text-sm text-gray-500">
+                            {% if listing.pricing_type == 'one_time' %}one-time{% else %}/month{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'agents:marketplace-detail' listing.id %}" 
+                       class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- All Listings -->
+<div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">All Agents</h2>
+    
+    {% if listings %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for listing in listings %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                               {% if listing.category == 'customer_support' %}bg-blue-100 text-blue-800
+                               {% elif listing.category == 'sales' %}bg-green-100 text-green-800
+                               {% elif listing.category == 'research' %}bg-purple-100 text-purple-800
+                               {% elif listing.category == 'automation' %}bg-orange-100 text-orange-800
+                               {% elif listing.category == 'scheduling' %}bg-pink-100 text-pink-800
+                               {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ listing.get_category_display }}
+                    </span>
+                    {% if listing.verified_seller %}
+                    <span class="text-green-500" title="Verified Seller">✓</span>
+                    {% endif %}
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ listing.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ listing.description }}</p>
+
+                <div class="flex items-center space-x-3 text-sm text-gray-600 mb-4">
+                    <div class="flex items-center">
+                        <span class="text-yellow-500 mr-1">★</span>
+                        <span>{{ listing.average_rating|floatformat:1 }}</span>
+                    </div>
+                    <span class="text-gray-400">•</span>
+                    <div>{{ listing.total_sales }} sales</div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <div>
+                        {% if listing.pricing_type == 'free' %}
+                        <span class="text-xl font-bold text-green-600">FREE</span>
+                        {% else %}
+                        <span class="text-xl font-bold text-gray-900">${{ listing.price }}</span>
+                        <span class="text-xs text-gray-500">
+                            {% if listing.pricing_type == 'one_time' %}one-time{% else %}/mo{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'agents:marketplace-detail' listing.id %}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                        View
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" 
+               class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" 
+                   class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    {{ num }}
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" 
+               class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-gray-50 rounded-lg p-12 text-center">
+        <p class="text-gray-600 mb-4">No agents found matching your criteria</p>
+        <a href="{% url 'agents:marketplace-list' %}" 
+           class="text-blue-600 hover:text-blue-800 font-medium">
+            Clear filters and browse all agents
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- How It Works -->
+<div id="how-it-works" class="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">How the Marketplace Works</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl text-white">🛒</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Browse & Purchase</h3>
+            <p class="text-gray-600 text-sm">
+                Explore pre-built agents, read reviews, and purchase with secure Stripe payment
+            </p>
+        </div>
+        <div class="text-center">
+            <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl text-white">🚀</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Deploy Instantly</h3>
+            <p class="text-gray-600 text-sm">
+                Agent automatically copied to your account, ready to customize and use
+            </p>
+        </div>
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl text-white">💰</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Sell Your Agents</h3>
+            <p class="text-gray-600 text-sm">
+                List your agents for sale, earn revenue, and get automatic payouts
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

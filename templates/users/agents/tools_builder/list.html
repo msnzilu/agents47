@@ -1,0 +1,439 @@
+{% extends 'users/base.html' %}
+
+{% block title %}My Custom Tools - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🛠️ My Custom Tools</h1>
+                <p class="text-gray-600 mt-1">Manage your no-code API integrations</p>
+            </div>
+            <a href="{% url 'agents:custom-tools-builder' %}" 
+               class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium inline-flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create New Tool
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Tools</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_tools }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Executions</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_executions|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Success Rate</p>
+                    <p class="text-3xl font-bold text-green-600">{{ success_rate }}%</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Public Tools</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ tools|length|add:"-"|add:tools|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6" x-data="{ showFilters: false }">
+        <div class="flex items-center gap-4">
+            <div class="flex-1">
+                <div class="relative">
+                    <input type="text" 
+                           placeholder="Search tools..." 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                           id="searchInput">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <button @click="showFilters = !showFilters"
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                Filters
+            </button>
+
+            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Categories</option>
+                <option value="data">Data & APIs</option>
+                <option value="communication">Communication</option>
+                <option value="productivity">Productivity</option>
+                <option value="analytics">Analytics</option>
+                <option value="automation">Automation</option>
+                <option value="other">Other</option>
+            </select>
+
+            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="-created_at">Newest First</option>
+                <option value="created_at">Oldest First</option>
+                <option value="name">Name A-Z</option>
+                <option value="-execution_count">Most Used</option>
+            </select>
+        </div>
+
+        <!-- Advanced Filters (Toggle) -->
+        <div x-show="showFilters" 
+             x-transition
+             class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Auth Type</label>
+                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">All Types</option>
+                    <option value="none">No Auth</option>
+                    <option value="api_key">API Key</option>
+                    <option value="bearer">Bearer Token</option>
+                    <option value="basic">Basic Auth</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">HTTP Method</label>
+                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">All Methods</option>
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tools List -->
+    {% if tools %}
+        <div class="grid grid-cols-1 gap-4" id="toolsList">
+            {% for tool in tools %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition tool-card"
+                     data-name="{{ tool.name|lower }}"
+                     data-category="{{ tool.category }}"
+                     data-auth="{{ tool.auth_type }}">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between">
+                            <!-- Tool Info -->
+                            <div class="flex items-start gap-4 flex-1">
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center text-3xl flex-shrink-0">
+                                    {{ tool.icon }}
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h3 class="text-xl font-semibold text-gray-900">{{ tool.name }}</h3>
+                                        {% if tool.is_public %}
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                                                Public
+                                            </span>
+                                        {% endif %}
+                                        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
+                                            {{ tool.get_tool_type_display }}
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="text-gray-600 mb-3 line-clamp-2">{{ tool.description }}</p>
+                                    
+                                    <!-- Tool Details -->
+                                    <div class="flex items-center gap-6 text-sm text-gray-500">
+                                        <div class="flex items-center gap-1">
+                                            <span class="font-mono font-semibold text-gray-700">{{ tool.http_method }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                            </svg>
+                                            <span class="capitalize">{{ tool.auth_type }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                            </svg>
+                                            <span>{{ tool.parameters.count }} parameters</span>
+                                        </div>
+                                        {% if tool.category %}
+                                            <div class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                                </svg>
+                                                <span class="capitalize">{{ tool.category }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Endpoint Preview -->
+                                    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Endpoint:</p>
+                                        <p class="text-xs font-mono text-gray-800 break-all">{{ tool.endpoint_url|truncatechars:80 }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stats & Actions -->
+                            <div class="flex flex-col items-end gap-4 ml-6">
+                                <!-- Stats -->
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-gray-900">{{ tool.execution_count }}</div>
+                                    <div class="text-xs text-gray-600">executions</div>
+                                    {% if tool.execution_count > 0 %}
+                                        <div class="mt-1">
+                                            {% widthratio tool.success_count tool.execution_count 100 as success_pct %}
+                                            <span class="text-sm font-semibold" 
+                                                  :class="{% if success_pct >= 80 %}text-green-600{% elif success_pct >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                                {{ success_pct }}% success
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex flex-col gap-2">
+                                    <a href="{% url 'agents:custom-tools-detail' tool.id %}"
+                                       class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium text-center inline-flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Test
+                                    </a>
+                                    
+                                    <a href="{% url 'agents:custom-tools-edit' tool.id %}"
+                                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium text-center inline-flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Edit
+                                    </a>
+
+                                    <button onclick="confirmDelete('{{ tool.id }}', '{{ tool.name }}')"
+                                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium inline-flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Test Info -->
+                        {% if tool.last_test_at %}
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">
+                                        Last tested: {{ tool.last_test_at|timesince }} ago
+                                    </span>
+                                    {% if tool.last_test_result %}
+                                        <span class="px-2 py-1 rounded text-xs font-medium"
+                                              :class="{% if tool.last_test_result.success %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {% if tool.last_test_result.success %}✓ Passed{% else %}✗ Failed{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="mt-8 flex items-center justify-center gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        First
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+
+                <span class="px-4 py-2 text-gray-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Next
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Last
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No custom tools yet</h3>
+            <p class="text-gray-600 mb-6">Create your first custom tool to integrate any API without writing code</p>
+            <a href="{% url 'agents:custom-tools-builder' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create Your First Tool
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Delete Tool?</h3>
+                <p class="text-sm text-gray-600">This action cannot be undone</p>
+            </div>
+        </div>
+        
+        <p class="text-gray-700 mb-6">
+            Are you sure you want to delete <strong id="deleteToolName"></strong>?
+        </p>
+        
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" 
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                Cancel
+            </button>
+            <button onclick="deleteTool()" 
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                Delete Tool
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let toolToDelete = null;
+
+// Search functionality
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const tools = document.querySelectorAll('.tool-card');
+    
+    tools.forEach(tool => {
+        const name = tool.dataset.name;
+        if (name.includes(searchTerm)) {
+            tool.style.display = '';
+        } else {
+            tool.style.display = 'none';
+        }
+    });
+});
+
+// Delete confirmation
+function confirmDelete(toolId, toolName) {
+    toolToDelete = toolId;
+    document.getElementById('deleteToolName').textContent = toolName;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    toolToDelete = null;
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+async function deleteTool() {
+    if (!toolToDelete) return;
+    
+    try {
+        const response = await fetch(`/agents/custom-tools/${toolToDelete}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error deleting tool');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+    
+    closeDeleteModal();
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

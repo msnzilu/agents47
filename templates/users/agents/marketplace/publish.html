@@ -1,0 +1,323 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Publish Agent - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <a href="{% url 'agents:marketplace-my-listings' %}" 
+               class="text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">📦 Publish Agent to Marketplace</h1>
+                <p class="text-gray-600 mt-1">Share your AI agent with the community</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Select Agent -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">1. Select Agent</h2>
+            
+            {% if user_agents %}
+            <div class="space-y-3">
+                <label class="block text-sm font-medium text-gray-700">Choose an agent to publish</label>
+                <select name="agent_id" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Select an agent...</option>
+                    {% for agent in user_agents %}
+                    <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.get_use_case_display }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-sm text-gray-500">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Only unpublished agents are shown
+                </p>
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No agents available</h3>
+                <p class="text-gray-600 mb-4">You need to create an agent before publishing to the marketplace</p>
+                <a href="{% url 'agents:agent_create' %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Agent
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if user_agents %}
+        <!-- Listing Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">2. Listing Details</h2>
+            
+            <div class="space-y-4">
+                <!-- Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Display Name *</label>
+                    {{ form.name }}
+                    <p class="text-sm text-gray-500 mt-1">The name shown in the marketplace (can differ from agent name)</p>
+                </div>
+
+                <!-- Tagline -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tagline *</label>
+                    {{ form.tagline }}
+                    <p class="text-sm text-gray-500 mt-1">A short, catchy description (max 100 characters)</p>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Description *</label>
+                    {{ form.description }}
+                    <p class="text-sm text-gray-500 mt-1">Detailed description of what your agent does</p>
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                    {{ form.category }}
+                </div>
+
+                <!-- Tags -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                    {{ form.tags }}
+                    <p class="text-sm text-gray-500 mt-1">Comma-separated keywords (e.g., automation, chatbot, analysis)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Media & Assets -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">3. Media & Assets</h2>
+            
+            <div class="space-y-4">
+                <!-- Logo URL -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                    {{ form.logo_url }}
+                    <p class="text-sm text-gray-500 mt-1">Direct URL to your agent's logo image</p>
+                </div>
+
+                <!-- Screenshots -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Screenshot URLs</label>
+                    {{ form.screenshots }}
+                    <p class="text-sm text-gray-500 mt-1">JSON array of screenshot URLs (e.g., ["url1", "url2"])</p>
+                </div>
+
+                <!-- Demo Video -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Demo Video URL</label>
+                    {{ form.demo_video_url }}
+                    <p class="text-sm text-gray-500 mt-1">YouTube or video hosting URL</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">4. Pricing</h2>
+            
+            <div class="space-y-4">
+                <!-- Is Free -->
+                <div class="flex items-center gap-3">
+                    {{ form.is_free }}
+                    <label class="text-sm font-medium text-gray-700">Offer this agent for free</label>
+                </div>
+
+                <!-- Price -->
+                <div id="price-field">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price (USD) *</label>
+                    {{ form.price }}
+                    <p class="text-sm text-gray-500 mt-1">One-time purchase price</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources & Support -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">5. Resources & Support</h2>
+            
+            <div class="space-y-4">
+                <!-- Documentation URL -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Documentation URL</label>
+                    {{ form.documentation_url }}
+                    <p class="text-sm text-gray-500 mt-1">Link to usage documentation</p>
+                </div>
+
+                <!-- Support URL -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Support URL</label>
+                    {{ form.support_url }}
+                    <p class="text-sm text-gray-500 mt-1">Link to support or contact page</p>
+                </div>
+
+                <!-- Required Integrations -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Required Integrations</label>
+                    {{ form.required_integrations }}
+                    <p class="text-sm text-gray-500 mt-1">JSON array of required services (e.g., ["OpenAI", "Slack"])</p>
+                </div>
+
+                <!-- Version -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Version</label>
+                    {{ form.version }}
+                    <p class="text-sm text-gray-500 mt-1">Current version (e.g., 1.0.0)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">📋 Publishing Guidelines</h3>
+            <ul class="space-y-2 text-sm text-blue-800">
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Your agent will be reviewed before appearing in the marketplace</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Ensure your description is clear and accurately describes the agent's capabilities</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Provide accurate pricing and clearly state any required integrations</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>High-quality listings with screenshots and documentation perform better</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Form Errors -->
+        {% if form.errors %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-red-900 mb-3">⚠️ Please fix the following errors:</h3>
+            <ul class="space-y-2 text-sm text-red-800">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                    <li class="flex items-start gap-2">
+                        <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <span><strong>{{ field }}:</strong> {{ error }}</span>
+                    </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between gap-4 pt-6">
+            <a href="{% url 'agents:marketplace-my-listings' %}" 
+               class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm">
+                Submit for Review
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Price Toggle Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isFreeCheckbox = document.querySelector('input[name="is_free"]');
+    const priceField = document.getElementById('price-field');
+    const priceInput = document.querySelector('input[name="price"]');
+    
+    if (isFreeCheckbox && priceField) {
+        function togglePriceField() {
+            if (isFreeCheckbox.checked) {
+                priceField.style.display = 'none';
+                priceInput.required = false;
+            } else {
+                priceField.style.display = 'block';
+                priceInput.required = true;
+            }
+        }
+        
+        isFreeCheckbox.addEventListener('change', togglePriceField);
+        togglePriceField(); // Initial state
+    }
+});
+</script>
+
+<style>
+/* Form field styling */
+input[type="text"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    ring: 2px;
+    ring-color: #3b82f6;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+</style>
+{% endblock %}

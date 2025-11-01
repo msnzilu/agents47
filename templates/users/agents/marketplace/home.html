@@ -1,0 +1,336 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Agent Marketplace - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🛒 Agent Marketplace</h1>
+                <p class="text-gray-600 mt-1">Discover, install, and deploy powerful AI agents built by the community</p>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <form method="get" class="flex gap-3">
+            <div class="flex-1 relative">
+                <input type="text" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="Search for AI agents..." 
+                       class="w-full px-6 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <button type="submit" 
+                    class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                Search
+            </button>
+        </form>
+
+        <!-- Quick Stats -->
+        <div class="flex flex-wrap gap-6 mt-6">
+            <div class="flex items-center gap-2 text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                </svg>
+                <span class="font-semibold text-gray-900">{{ total_agents }}</span>
+                <span>Agents</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span class="font-semibold text-gray-900">{{ total_installs }}</span>
+                <span>Installs</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Category Filter -->
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700">Category:</label>
+                <select name="category" 
+                        onchange="window.location.href='?category=' + this.value + '{% if search_query %}&search={{ search_query }}{% endif %}&sort={{ current_sort }}'"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Categories</option>
+                    {% for value, label in categories %}
+                    <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Sort Filter -->
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700">Sort by:</label>
+                <select name="sort" 
+                        onchange="window.location.href='?sort=' + this.value + '{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}'"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                </select>
+            </div>
+
+            <!-- Clear Filters -->
+            {% if current_category or search_query %}
+            <a href="{% url 'agents:marketplace-home' %}" 
+               class="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Clear Filters
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Featured Agents -->
+    {% if featured_agents %}
+    <div class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">⭐ Featured Agents</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for agent in featured_agents %}
+            <a href="{% url 'agents:marketplace-agent-detail' agent.id %}" 
+               class="group bg-white rounded-xl shadow-sm border-2 border-yellow-200 hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-105">
+                <div class="relative">
+                    <!-- Featured Badge -->
+                    <div class="absolute top-3 right-3 z-10">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            FEATURED
+                        </span>
+                    </div>
+                    
+                    <!-- Agent Logo/Image -->
+                    <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        {% if agent.logo_url %}
+                        <img src="{{ agent.logo_url }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="text-6xl">🤖</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <!-- Agent Name & Category -->
+                    <div class="mb-3">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition mb-1">
+                            {{ agent.name }}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ agent.get_category_display }}</p>
+                    </div>
+                    
+                    <!-- Tagline -->
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                        {{ agent.tagline }}
+                    </p>
+                    
+                    <!-- Stats -->
+                    <div class="flex items-center gap-4 text-sm mb-4">
+                        <div class="flex items-center gap-1">
+                            <span class="text-yellow-500">★</span>
+                            <span class="font-medium text-gray-900">{{ agent.rating_average|floatformat:1 }}</span>
+                            <span class="text-gray-500">({{ agent.rating_count }})</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            <span>{{ agent.install_count }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                            {% if agent.is_free %}
+                            <span class="text-lg font-bold text-green-600">FREE</span>
+                            {% else %}
+                            <span class="text-lg font-bold text-gray-900">${{ agent.price }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-blue-600 group-hover:text-blue-700 font-medium text-sm">
+                            View Details →
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Agents Grid -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">
+                {% if search_query %}
+                    Search Results for "{{ search_query }}"
+                {% elif current_category %}
+                    {{ current_category|title }} Agents
+                {% else %}
+                    All Agents
+                {% endif %}
+            </h2>
+            <span class="text-sm text-gray-600">{{ page_obj.paginator.count }} agents found</span>
+        </div>
+
+        {% if agents %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for agent in agents %}
+            <a href="{% url 'agents:marketplace-agent-detail' agent.id %}" 
+               class="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-105">
+                <!-- Agent Logo/Image -->
+                <div class="h-40 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center relative">
+                    {% if agent.logo_url %}
+                    <img src="{{ agent.logo_url }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="text-5xl">🤖</div>
+                    {% endif %}
+                    
+                    <!-- Price Badge -->
+                    <div class="absolute top-3 right-3">
+                        {% if agent.is_free %}
+                        <span class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg">
+                            FREE
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-white text-gray-900 text-xs font-bold rounded-full shadow-lg">
+                            ${{ agent.price }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-5">
+                    <!-- Agent Name & Category -->
+                    <div class="mb-3">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition mb-1 line-clamp-1">
+                            {{ agent.name }}
+                        </h3>
+                        <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                            {{ agent.get_category_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Tagline -->
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                        {{ agent.tagline }}
+                    </p>
+                    
+                    <!-- Stats & Actions -->
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1">
+                                <span class="text-yellow-500">★</span>
+                                <span class="font-medium text-gray-900">{{ agent.rating_average|floatformat:1 }}</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>{{ agent.install_count }}</span>
+                            </div>
+                        </div>
+                        <span class="text-blue-600 group-hover:text-blue-700 font-medium">
+                            View →
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="mt-8 flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} agents
+            </div>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}&sort={{ current_sort }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 font-medium">
+                    ← Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-gray-50">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}&sort={{ current_sort }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 font-medium">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No agents found</h3>
+            <p class="text-gray-600 mb-6">
+                {% if search_query %}
+                No agents match your search "{{ search_query }}". Try different keywords or browse all agents.
+                {% else %}
+                There are no agents in this category yet.
+                {% endif %}
+            </p>
+            <a href="{% url 'agents:marketplace-home' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                Browse All Agents
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Call to Action -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12 text-center">
+        <h2 class="text-2xl font-bold text-gray-900 mb-3">Ready to Sell Your AI Agents?</h2>
+        <p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Join our marketplace and reach thousands of users. Start monetizing your AI agents today!
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center">
+            {% if user.is_authenticated %}
+            <a href="{% url 'agents:marketplace-publish' %}" 
+               class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-sm">
+                Publish Your Agent
+            </a>
+            <a href="{% url 'agents:marketplace-dashboard' %}" 
+               class="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-50 transition border border-gray-300">
+                Seller Dashboard
+            </a>
+            {% else %}
+            <a href="{% url 'users:register' %}" 
+               class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-sm">
+                Get Started
+            </a>
+            <a href="{% url 'users:login' %}" 
+               class="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-50 transition border border-gray-300">
+                Sign In
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

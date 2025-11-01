@@ -1,0 +1,324 @@
+{% extends 'users/base.html' %}
+
+{% block title %}{{ orchestration.name }} - Orchestration Details{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="text-sm mb-6">
+    <ol class="flex items-center space-x-2">
+        <li><a href="{% url 'agents:orchestration-list' %}" class="text-blue-600 hover:underline">Orchestrations</a></li>
+        <li class="text-gray-500">/</li>
+        <li class="text-gray-700">{{ orchestration.name }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-start justify-between">
+        <div class="flex-1">
+            <div class="flex items-center mb-3">
+                <h1 class="text-3xl font-bold text-gray-900">{{ orchestration.name }}</h1>
+                <span class="ml-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                           {% if orchestration.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {% if orchestration.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+                <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    🚀 Phase 11
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-6 text-sm text-gray-600 mb-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span class="font-medium">Strategy:</span>
+                    <span class="ml-1">{{ orchestration.get_strategy_display }}</span>
+                </div>
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Created {{ orchestration.created_at|timesince }} ago</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col space-y-2 ml-6">
+            <a href="{% url 'agents:orchestration-test' orchestration.id %}" 
+               class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center font-medium">
+                🧪 Test Orchestration
+            </a>
+            <a href="{% url 'agents:orchestration-update' orchestration.id %}" 
+               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center font-medium">
+                Edit
+            </a>
+            <a href="{% url 'agents:orchestration-workflow-builder' orchestration.id %}" 
+               class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-center font-medium">
+                Workflow Builder
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Workflow Errors -->
+{% if workflow_errors %}
+<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <h3 class="text-sm font-medium text-red-800 mb-2">⚠️ Workflow Configuration Errors:</h3>
+    <ul class="list-disc list-inside text-sm text-red-700">
+        {% for error in workflow_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <p class="text-sm text-gray-600">Total Executions</p>
+        <p class="text-3xl font-bold text-gray-900">{{ orchestration.total_executions }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <p class="text-sm text-gray-600">Successful</p>
+        <p class="text-3xl font-bold text-green-600">{{ orchestration.successful_executions }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <p class="text-sm text-gray-600">Success Rate</p>
+        <p class="text-3xl font-bold text-blue-600">{{ success_rate|floatformat:1 }}%</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <p class="text-sm text-gray-600">Avg Time</p>
+        <p class="text-3xl font-bold text-purple-600">
+            {% if orchestration.average_execution_time_ms > 0 %}
+                {{ orchestration.average_execution_time_ms|floatformat:0 }}ms
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Orchestrator Agent -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Orchestrator Agent</h2>
+            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div>
+                    <h3 class="font-medium text-gray-900">{{ orchestration.orchestrator_agent.name }}</h3>
+                    <p class="text-sm text-gray-600">{{ orchestration.orchestrator_agent.get_use_case_display }}</p>
+                </div>
+                <a href="{% url 'agents:agent-detail' orchestration.orchestrator_agent.id %}" 
+                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View Agent →
+                </a>
+            </div>
+        </div>
+
+        <!-- Participant Agents -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Participant Agents ({{ participants.count }})</h2>
+                <button onclick="document.getElementById('add-participant-modal').classList.remove('hidden')"
+                        class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition">
+                    + Add Agent
+                </button>
+            </div>
+
+            {% if participants %}
+            <div class="space-y-3">
+                {% for participant in participants %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <h3 class="font-medium text-gray-900">{{ participant.agent.name }}</h3>
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ participant.role }}
+                            </span>
+                            {% if participant.is_optional %}
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Optional
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-600">{{ participant.agent.get_use_case_display }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Execution Order: {{ participant.execution_order }}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <a href="{% url 'agents:agent-detail' participant.agent.id %}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            View
+                        </a>
+                        <form method="post" action="{% url 'agents:orchestration-participant-remove' orchestration.id participant.id %}"
+                              onsubmit="return confirm('Remove this participant?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No participant agents yet. Add agents to start building your workflow.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Executions -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Recent Executions</h2>
+                <a href="{% url 'agents:orchestration-execution-list' orchestration.id %}" 
+                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View All →
+                </a>
+            </div>
+
+            {% if recent_executions %}
+            <div class="space-y-3">
+                {% for execution in recent_executions %}
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                   {% if execution.status == 'completed' %}bg-green-100 text-green-800
+                                   {% elif execution.status == 'failed' %}bg-red-100 text-red-800
+                                   {% elif execution.status == 'running' %}bg-blue-100 text-blue-800
+                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ execution.get_status_display }}
+                        </span>
+                        <span class="text-xs text-gray-500">{{ execution.created_at|timesince }} ago</span>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-2">{{ execution.user_query|truncatewords:15 }}</p>
+                    {% if execution.execution_time_ms %}
+                    <p class="text-xs text-gray-500">Execution time: {{ execution.execution_time_ms }}ms</p>
+                    {% endif %}
+                    <a href="{% url 'agents:execution-detail' execution.id %}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block">
+                        View Details →
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No executions yet. Test this orchestration to see results here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="space-y-2">
+                <a href="{% url 'agents:orchestration-test' orchestration.id %}" 
+                   class="block w-full px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition text-center font-medium">
+                    🧪 Test Run
+                </a>
+                <a href="{% url 'agents:orchestration-metrics' orchestration.id %}" 
+                   class="block w-full px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition text-center font-medium">
+                    📊 View Metrics
+                </a>
+                <a href="{% url 'agents:orchestration-workflow-builder' orchestration.id %}" 
+                   class="block w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-center font-medium">
+                    🔧 Workflow Builder
+                </a>
+                <a href="{% url 'agents:orchestration-clone' orchestration.id %}" 
+                   class="block w-full px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition text-center font-medium"
+                   onclick="return confirm('Clone this orchestration?');">
+                    📋 Clone
+                </a>
+            </div>
+        </div>
+
+        <!-- Workflow Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Workflow Config</h2>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <span class="text-gray-600">Synthesis Strategy:</span>
+                    <span class="ml-2 font-medium">{{ orchestration.workflow_config.synthesis_strategy|default:"summarize" }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">Max Parallel Agents:</span>
+                    <span class="ml-2 font-medium">{{ orchestration.workflow_config.max_parallel_agents|default:"3" }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">Steps Configured:</span>
+                    <span class="ml-2 font-medium">{{ orchestration.workflow_config.steps|length|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-white rounded-lg shadow-sm border border-red-200 p-6">
+            <h2 class="text-lg font-semibold text-red-900 mb-4">Danger Zone</h2>
+            <div class="space-y-3">
+                <a href="{% url 'agents:orchestration-delete' orchestration.id %}" 
+                   class="block w-full px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition text-center font-medium">
+                    🗑️ Delete Orchestration
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Participant Modal -->
+<div id="add-participant-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Add Participant Agent</h3>
+            <form method="post" action="{% url 'agents:orchestration-participant-add' orchestration.id %}">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Agent</label>
+                        <select name="agent_id" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Choose an agent...</option>
+                            {% for agent in available_agents %}
+                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.get_use_case_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <input type="text" name="role" value="participant"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Execution Order</label>
+                        <input type="number" name="execution_order" value="0" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_optional" class="h-4 w-4 text-blue-600 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Optional (execution can succeed if this agent fails)</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" 
+                            onclick="document.getElementById('add-participant-modal').classList.add('hidden')"
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Add Agent
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -136,19 +136,4 @@ xxhash==3.6.0
 yarl==1.22.0
 zope.interface==8.0.1
 zstandard==0.25.0
-django-extensions
-pyotp
-qrcode
-Pillow
-bleach
-elasticsearch==8.11.0
-elasticsearch-dsl==8.11.0
-jinja2 
-beautifulsoup4 
-requests
-transformers
-huggingface-hub
-tokenizers
-sentence-transformers
-
 

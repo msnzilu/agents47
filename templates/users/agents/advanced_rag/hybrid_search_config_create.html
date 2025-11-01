@@ -1,0 +1,374 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Configure Hybrid Search - {{ knowledge_base.title }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="text-sm mb-6">
+    <ol class="flex items-center space-x-2">
+        <li><a href="{% url 'agents:agent-list' %}" class="text-blue-600 hover:underline">Agents</a></li>
+        <li class="text-gray-500">/</li>
+        <li><a href="{% url 'agents:agent-detail' agent.id %}" class="text-blue-600 hover:underline">{{ agent.name }}</a></li>
+        <li class="text-gray-500">/</li>
+        <li><a href="{% url 'agents:knowledge-base-detail' knowledge_base.id %}" class="text-blue-600 hover:underline">{{ knowledge_base.title }}</a></li>
+        <li class="text-gray-500">/</li>
+        <li class="text-gray-700">Configure Hybrid Search</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Configure Hybrid Search</h1>
+            <p class="text-gray-600">Knowledge Base: <span class="font-medium">{{ knowledge_base.title }}</span></p>
+        </div>
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+            🚀 Phase 11 Feature
+        </span>
+    </div>
+</div>
+
+<!-- Info Banner -->
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+    <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 What is Hybrid Search?</h3>
+    <p class="text-blue-800 mb-3">
+        Hybrid Search combines vector similarity (semantic understanding) with keyword matching (exact terms) 
+        to provide the most accurate search results.
+    </p>
+    <ul class="list-disc list-inside space-y-1 text-blue-800 text-sm">
+        <li><strong>Vector Search:</strong> Understands meaning and context</li>
+        <li><strong>Keyword Search:</strong> Finds exact term matches</li>
+        <li><strong>Reranking:</strong> AI-powered final ranking for best results</li>
+        <li><strong>Query Expansion:</strong> Automatically expands queries with related terms</li>
+    </ul>
+</div>
+
+<!-- Configuration Form -->
+<form method="post" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    {% csrf_token %}
+    
+    <div class="space-y-6">
+        <!-- Weight Settings -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Search Weight Configuration</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Vector Weight -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Vector Search Weight
+                        <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="vector_weight" 
+                           value="{{ form.vector_weight.value|default:'0.7' }}" 
+                           min="0" max="1" step="0.1" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Recommended: 0.7 (Higher = more semantic understanding)</p>
+                    {% if form.vector_weight.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.vector_weight.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Keyword Weight -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Keyword Search Weight
+                        <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="keyword_weight" 
+                           value="{{ form.keyword_weight.value|default:'0.3' }}" 
+                           min="0" max="1" step="0.1" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Recommended: 0.3 (Higher = more exact matching)</p>
+                    {% if form.keyword_weight.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.keyword_weight.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-yellow-50 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    ⚠️ <strong>Note:</strong> Vector weight + Keyword weight should equal 1.0 for best results
+                </p>
+            </div>
+        </div>
+
+        <!-- Reranking Settings -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Reranking Configuration</h3>
+            
+            <div class="space-y-4">
+                <!-- Enable Reranking -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="rerank_enabled" id="rerank_enabled"
+                               {% if form.rerank_enabled.value %}checked{% endif %}
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3">
+                        <label for="rerank_enabled" class="font-medium text-gray-700">
+                            Enable Cross-Encoder Reranking
+                        </label>
+                        <p class="text-sm text-gray-500">
+                            Uses AI to rerank results for maximum relevance (recommended)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rerank Model -->
+                <div id="rerank_settings" {% if not form.rerank_enabled.value %}style="display:none"{% endif %}>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Reranking Model
+                    </label>
+                    <select name="rerank_model" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="cross-encoder/ms-marco-MiniLM-L-6-v2" 
+                                {% if form.rerank_model.value == "cross-encoder/ms-marco-MiniLM-L-6-v2" %}selected{% endif %}>
+                            MiniLM (Fast, Good)
+                        </option>
+                        <option value="cross-encoder/ms-marco-MiniLM-L-12-v2"
+                                {% if form.rerank_model.value == "cross-encoder/ms-marco-MiniLM-L-12-v2" %}selected{% endif %}>
+                            MiniLM-L12 (Balanced)
+                        </option>
+                        <option value="cross-encoder/ms-marco-electra-base"
+                                {% if form.rerank_model.value == "cross-encoder/ms-marco-electra-base" %}selected{% endif %}>
+                            ELECTRA (Slower, Best)
+                        </option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Choose based on speed vs accuracy tradeoff</p>
+                </div>
+
+                <!-- Top K for Reranking -->
+                <div id="rerank_top_k" {% if not form.rerank_enabled.value %}style="display:none"{% endif %}>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Results to Rerank
+                    </label>
+                    <input type="number" name="rerank_top_k" 
+                           value="{{ form.rerank_top_k.value|default:'10' }}" 
+                           min="5" max="50"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Rerank top N results (more = slower but more accurate)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Elasticsearch Integration -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Elasticsearch Integration</h3>
+            
+            <div class="space-y-4">
+                <!-- Enable ES -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="es_enabled" id="es_enabled"
+                               {% if form.es_enabled.value %}checked{% endif %}
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3">
+                        <label for="es_enabled" class="font-medium text-gray-700">
+                            Enable Elasticsearch for Keyword Search
+                        </label>
+                        <p class="text-sm text-gray-500">
+                            Use Elasticsearch for advanced keyword matching (optional)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ES Settings -->
+                <div id="es_settings" {% if not form.es_enabled.value %}style="display:none"{% endif %}>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Elasticsearch Index Name
+                            </label>
+                            <input type="text" name="es_index_name" 
+                                   value="{{ form.es_index_name.value|default:'' }}" 
+                                   placeholder="knowledge-base-{{ knowledge_base.id }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                BM25 k1 Parameter
+                            </label>
+                            <input type="number" name="bm25_k1" 
+                                   value="{{ form.bm25_k1.value|default:'1.2' }}" 
+                                   min="0" max="3" step="0.1"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Controls term frequency saturation (default: 1.2)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                BM25 b Parameter
+                            </label>
+                            <input type="number" name="bm25_b" 
+                                   value="{{ form.bm25_b.value|default:'0.75' }}" 
+                                   min="0" max="1" step="0.05"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Controls document length normalization (default: 0.75)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Expansion -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Query Expansion</h3>
+            
+            <div class="space-y-4">
+                <!-- Enable Query Expansion -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="query_expansion_enabled" id="query_expansion_enabled"
+                               {% if form.query_expansion_enabled.value %}checked{% endif %}
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3">
+                        <label for="query_expansion_enabled" class="font-medium text-gray-700">
+                            Enable Query Expansion
+                        </label>
+                        <p class="text-sm text-gray-500">
+                            Automatically expand queries with synonyms and related terms
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Max Expansions -->
+                <div id="expansion_settings" {% if not form.query_expansion_enabled.value %}style="display:none"{% endif %}>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Maximum Query Expansions
+                    </label>
+                    <input type="number" name="max_query_expansions" 
+                           value="{{ form.max_query_expansions.value|default:'3' }}" 
+                           min="1" max="10"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Number of expanded terms to generate per query</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="mt-8 flex justify-between items-center">
+        <a href="{% url 'agents:knowledge-base-detail' knowledge_base.id %}" 
+           class="text-gray-600 hover:text-gray-800">
+            Cancel
+        </a>
+        <div class="flex space-x-3">
+            <button type="button" id="test-config" 
+                    class="px-6 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition">
+                Test Configuration
+            </button>
+            <button type="submit" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                Save Configuration
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Recommended Presets -->
+<div class="mt-6 bg-gray-50 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Recommended Presets</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Balanced -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-2">⚖️ Balanced</h4>
+            <p class="text-sm text-gray-600 mb-3">Best for general use</p>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Vector: 0.7, Keyword: 0.3</li>
+                <li>• Reranking: Enabled</li>
+                <li>• Query Expansion: Enabled</li>
+            </ul>
+            <button type="button" onclick="applyPreset('balanced')" 
+                    class="mt-3 w-full px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                Apply
+            </button>
+        </div>
+
+        <!-- Semantic -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-2">🧠 Semantic Focus</h4>
+            <p class="text-sm text-gray-600 mb-3">For conceptual queries</p>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Vector: 0.9, Keyword: 0.1</li>
+                <li>• Reranking: Enabled</li>
+                <li>• Query Expansion: Enabled</li>
+            </ul>
+            <button type="button" onclick="applyPreset('semantic')" 
+                    class="mt-3 w-full px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                Apply
+            </button>
+        </div>
+
+        <!-- Keyword -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-2">🔍 Keyword Focus</h4>
+            <p class="text-sm text-gray-600 mb-3">For exact term matching</p>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Vector: 0.4, Keyword: 0.6</li>
+                <li>• Reranking: Enabled</li>
+                <li>• Elasticsearch: Enabled</li>
+            </ul>
+            <button type="button" onclick="applyPreset('keyword')" 
+                    class="mt-3 w-full px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                Apply
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle rerank settings
+document.getElementById('rerank_enabled').addEventListener('change', function() {
+    const settings = document.getElementById('rerank_settings');
+    const topK = document.getElementById('rerank_top_k');
+    if (this.checked) {
+        settings.style.display = 'block';
+        topK.style.display = 'block';
+    } else {
+        settings.style.display = 'none';
+        topK.style.display = 'none';
+    }
+});
+
+// Toggle ES settings
+document.getElementById('es_enabled').addEventListener('change', function() {
+    const settings = document.getElementById('es_settings');
+    settings.style.display = this.checked ? 'block' : 'none';
+});
+
+// Toggle expansion settings
+document.getElementById('query_expansion_enabled').addEventListener('change', function() {
+    const settings = document.getElementById('expansion_settings');
+    settings.style.display = this.checked ? 'block' : 'none';
+});
+
+// Apply presets
+function applyPreset(preset) {
+    if (preset === 'balanced') {
+        document.querySelector('[name="vector_weight"]').value = 0.7;
+        document.querySelector('[name="keyword_weight"]').value = 0.3;
+        document.querySelector('[name="rerank_enabled"]').checked = true;
+        document.querySelector('[name="query_expansion_enabled"]').checked = true;
+    } else if (preset === 'semantic') {
+        document.querySelector('[name="vector_weight"]').value = 0.9;
+        document.querySelector('[name="keyword_weight"]').value = 0.1;
+        document.querySelector('[name="rerank_enabled"]').checked = true;
+        document.querySelector('[name="query_expansion_enabled"]').checked = true;
+    } else if (preset === 'keyword') {
+        document.querySelector('[name="vector_weight"]').value = 0.4;
+        document.querySelector('[name="keyword_weight"]').value = 0.6;
+        document.querySelector('[name="rerank_enabled"]').checked = true;
+        document.querySelector('[name="es_enabled"]').checked = true;
+    }
+    // Trigger change events
+    document.getElementById('rerank_enabled').dispatchEvent(new Event('change'));
+    document.getElementById('es_enabled').dispatchEvent(new Event('change'));
+    document.getElementById('query_expansion_enabled').dispatchEvent(new Event('change'));
+}
+</script>
+{% endblock %}

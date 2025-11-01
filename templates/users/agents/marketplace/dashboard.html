@@ -1,0 +1,318 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Marketplace Dashboard - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">💰 Marketplace Dashboard</h1>
+                <p class="text-gray-600 mt-1">Manage your agent listings and track sales</p>
+            </div>
+            <a href="{% url 'agents:marketplace-publish' %}" 
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium inline-flex items-center gap-2 shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create New Listing
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Listings -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500">Total</span>
+            </div>
+            <div class="text-3xl font-bold text-gray-900">{{ total_listings }}</div>
+            <p class="text-sm text-gray-600 mt-1">Active Listings</p>
+        </div>
+
+        <!-- Total Sales -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500">Sales</span>
+            </div>
+            <div class="text-3xl font-bold text-gray-900">{{ total_sales }}</div>
+            <p class="text-sm text-green-600 mt-1">+{{ sales_this_month }} this month</p>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500">Revenue</span>
+            </div>
+            <div class="text-3xl font-bold text-gray-900">${{ total_revenue|floatformat:0 }}</div>
+            <p class="text-sm text-purple-600 mt-1">${{ revenue_this_month|floatformat:0 }} this month</p>
+        </div>
+
+        <!-- Average Rating -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500">Rating</span>
+            </div>
+            <div class="text-3xl font-bold text-gray-900">{{ average_rating|floatformat:1 }}</div>
+            <p class="text-sm text-gray-600 mt-1">{{ total_reviews }} reviews</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="{% url 'agents:marketplace-publish' %}" 
+               class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Publish New Agent</div>
+                    <div class="text-xs text-gray-500">List your agent for sale</div>
+                </div>
+            </a>
+
+            <a href="{% url 'agents:marketplace-home' %}" 
+               class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Browse Marketplace</div>
+                    <div class="text-xs text-gray-500">Explore other agents</div>
+                </div>
+            </a>
+
+            <a href="{% url 'agents:marketplace-my-installations' %}" 
+               class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">My Purchases</div>
+                    <div class="text-xs text-gray-500">View installed agents</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- My Listings -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">My Listings</h2>
+            <div class="flex items-center gap-2">
+                <select class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="all">All Status</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending Review</option>
+                    <option value="draft">Draft</option>
+                </select>
+            </div>
+        </div>
+
+        {% if listings %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for listing in listings %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0">
+                                    🤖
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-gray-900">{{ listing.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ listing.get_category_display }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                       {% if listing.status == 'approved' %}bg-green-100 text-green-800
+                                       {% elif listing.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                       {% elif listing.status == 'draft' %}bg-gray-100 text-gray-800
+                                       {% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if listing.status == 'approved' %}✓ Live
+                                {% elif listing.status == 'pending' %}⏳ Review
+                                {% elif listing.status == 'draft' %}📝 Draft
+                                {% else %}✗ {{ listing.get_status_display }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if listing.is_free %}
+                            <span class="text-sm font-medium text-green-600">FREE</span>
+                            {% else %}
+                            <span class="text-sm font-medium text-gray-900">${{ listing.price }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <span class="text-sm text-gray-900">{{ listing.install_count }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <span class="text-yellow-500">★</span>
+                                <span class="text-sm text-gray-900">{{ listing.rating_average|floatformat:1 }}</span>
+                                <span class="text-xs text-gray-500">({{ listing.rating_count }})</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if not listing.is_free %}
+                            <span class="text-sm font-medium text-gray-900">${{ listing.price|floatformat:0 }}</span>
+                            {% else %}
+                            <span class="text-sm text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if listing.status == 'approved' %}
+                                <a href="{% url 'agents:marketplace-agent-detail' listing.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                   title="View Listing">
+                                    View
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'agents:marketplace-update-listing' listing.id %}" 
+                                   class="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                                   title="Edit">
+                                    Edit
+                                </a>
+                                <button onclick="if(confirm('Delete this listing?')) document.getElementById('delete-{{ listing.id }}').submit();"
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    Delete
+                                </button>
+                                <form id="delete-{{ listing.id }}" method="post" action="{% url 'agents:marketplace-delete-listing' listing.id %}" class="hidden">
+                                    {% csrf_token %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} listings
+            </div>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                    Previous
+                </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No listings yet</h3>
+            <p class="text-gray-600 mb-6">Start selling your AI agents on the marketplace</p>
+            <a href="{% url 'agents:marketplace-publish' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create Your First Listing
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tips Section -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-4">💡 Seller Tips</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="flex items-start gap-3">
+                <span class="text-blue-600 text-xl">✓</span>
+                <div>
+                    <div class="font-medium text-blue-900">Optimize Your Listings</div>
+                    <div class="text-blue-700">Use clear descriptions, screenshots, and competitive pricing</div>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-blue-600 text-xl">✓</span>
+                <div>
+                    <div class="font-medium text-blue-900">Respond to Reviews</div>
+                    <div class="text-blue-700">Engage with buyers and address concerns promptly</div>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-blue-600 text-xl">✓</span>
+                <div>
+                    <div class="font-medium text-blue-900">Keep Agents Updated</div>
+                    <div class="text-blue-700">Regular updates show buyers you're actively supporting your agents</div>
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-blue-600 text-xl">✓</span>
+                <div>
+                    <div class="font-medium text-blue-900">Provide Documentation</div>
+                    <div class="text-blue-700">Good docs increase customer satisfaction and reduce support needs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

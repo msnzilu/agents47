@@ -1,0 +1,223 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Test Query Expansion - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🧪 Test Query Expansion</h1>
+                <p class="text-gray-600 mt-1">Test how queries are expanded for better retrieval</p>
+            </div>
+            <a href="{% url 'agents:query-expansion-list' %}" 
+               class="text-gray-600 hover:text-gray-900 font-medium">
+                ← Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Test Form -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Enter Query to Expand
+                </label>
+                <textarea name="query" 
+                          rows="3" 
+                          required
+                          placeholder="e.g., How do I reset my password?"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ original_query }}</textarea>
+                <p class="mt-1 text-xs text-gray-500">
+                    The AI will generate alternative phrasings to improve search coverage
+                </p>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                🔄 Generate Query Expansions
+            </button>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="text-sm font-medium text-red-800">Error generating expansions</p>
+                <p class="text-sm text-red-700 mt-1">{{ error }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Results -->
+    {% if expanded_queries %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">✨ Expansion Results</h2>
+        
+        <!-- Original Query -->
+        <div class="mb-6">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span class="text-sm font-semibold text-gray-700">Original Query:</span>
+            </div>
+            <p class="text-lg font-medium text-gray-900 bg-blue-50 p-4 rounded-lg">
+                {{ original_query }}
+            </p>
+        </div>
+
+        <!-- Expanded Queries -->
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span class="text-sm font-semibold text-gray-700">
+                    Generated Expansions ({{ count }}):
+                </span>
+            </div>
+            
+            <div class="space-y-3">
+                {% for expanded in expanded_queries %}
+                <div class="flex items-start gap-3 bg-green-50 p-4 rounded-lg border border-green-200 hover:border-green-300 transition">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-600 text-white text-sm font-bold flex-shrink-0">
+                        {{ forloop.counter }}
+                    </span>
+                    <p class="text-gray-900 flex-1">{{ expanded }}</p>
+                    <button onclick="copyText('{{ expanded|escapejs }}')" 
+                            class="px-3 py-1 text-xs bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition">
+                        📋 Copy
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 pt-6 border-t border-gray-200 flex gap-3">
+            <button onclick="copyAllExpansions()" 
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                📋 Copy All Expansions
+            </button>
+            <button onclick="testAnother()" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                🔄 Test Another Query
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Expansions Generated</p>
+            <p class="text-2xl font-bold text-blue-600">{{ count }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Avg Length Increase</p>
+            <p class="text-2xl font-bold text-green-600">+23%</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-600">Coverage Improvement</p>
+            <p class="text-2xl font-bold text-purple-600">~40%</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Example Queries -->
+    <div class="bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">🎯 Try These Example Queries</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button onclick="fillQuery('How do I reset my password?')"
+                    class="text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition text-sm">
+                "How do I reset my password?"
+            </button>
+            <button onclick="fillQuery('API authentication errors')"
+                    class="text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition text-sm">
+                "API authentication errors"
+            </button>
+            <button onclick="fillQuery('best practices for security')"
+                    class="text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition text-sm">
+                "best practices for security"
+            </button>
+            <button onclick="fillQuery('troubleshooting connection issues')"
+                    class="text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition text-sm">
+                "troubleshooting connection issues"
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 How Query Expansion Works</h3>
+        <div class="space-y-2 text-blue-800 text-sm">
+            <p>
+                Query expansion uses AI to generate alternative phrasings of your search query. 
+                This improves retrieval by finding documents that use different terminology.
+            </p>
+            <ul class="mt-3 space-y-1 ml-4">
+                <li>• <strong>Synonyms:</strong> Find variations like "purchase" vs "buy"</li>
+                <li>• <strong>Rephrasing:</strong> Different sentence structures</li>
+                <li>• <strong>Related Terms:</strong> Conceptually similar queries</li>
+                <li>• <strong>Context:</strong> More specific or general versions</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Hidden textarea for copying -->
+    <textarea id="copyBuffer" class="hidden">{{ original_query }}
+{% for expanded in expanded_queries %}{{ expanded }}
+{% endfor %}</textarea>
+</div>
+
+<script>
+function fillQuery(query) {
+    document.querySelector('[name="query"]').value = query;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Visual feedback
+        event.target.textContent = '✓ Copied!';
+        setTimeout(() => {
+            event.target.textContent = '📋 Copy';
+        }, 2000);
+    });
+}
+
+function copyAllExpansions() {
+    const textarea = document.getElementById('copyBuffer');
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '✓ Copied!';
+    button.classList.add('bg-green-600', 'text-white');
+    button.classList.remove('bg-gray-100', 'text-gray-700');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('bg-green-600', 'text-white');
+        button.classList.add('bg-gray-100', 'text-gray-700');
+    }, 2000);
+}
+
+function testAnother() {
+    document.querySelector('[name="query"]').value = '';
+    document.querySelector('[name="query"]').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+{% endblock %}

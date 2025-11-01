@@ -1,0 +1,484 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Custom Tool Builder - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto" x-data="toolBuilder()">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🛠️ Custom Tool Builder</h1>
+                <p class="text-gray-600 mt-1">Create custom tools without writing code</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button @click="testTool()" 
+                        class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    Test Tool
+                </button>
+                <button @click="saveTool()" 
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                    </svg>
+                    Save Tool
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - Tool Configuration -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Step 1: Basic Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">1️⃣</span>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Basic Information</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tool Name *</label>
+                        <input type="text" 
+                               x-model="tool.name"
+                               placeholder="e.g., Get Weather Data"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                        <textarea x-model="tool.description"
+                                  rows="3"
+                                  placeholder="Explain what this tool does..."
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Icon (Emoji)</label>
+                            <div class="flex gap-2">
+                                <input type="text" 
+                                       x-model="tool.icon"
+                                       maxlength="2"
+                                       class="w-20 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-2xl text-center">
+                                <div class="flex gap-1">
+                                    <template x-for="emoji in ['🔧', '🌤️', '📊', '💰', '📧', '📱', '🔔', '🎯']">
+                                        <button type="button"
+                                                @click="tool.icon = emoji"
+                                                class="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-xl">
+                                            <span x-text="emoji"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <select x-model="tool.category"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select category...</option>
+                                <option value="data">Data & APIs</option>
+                                <option value="communication">Communication</option>
+                                <option value="productivity">Productivity</option>
+                                <option value="analytics">Analytics</option>
+                                <option value="automation">Automation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: API Configuration -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">2️⃣</span>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">API Configuration</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Method *</label>
+                            <select x-model="tool.http_method"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Endpoint URL *</label>
+                            <input type="url" 
+                                   x-model="tool.endpoint_url"
+                                   placeholder="https://api.example.com/v1/data"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            💡 <strong>Tip:</strong> You can use <code class="bg-blue-100 px-1 py-0.5 rounded">{{parameter_name}}</code> in the URL for dynamic values
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Authentication -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">3️⃣</span>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Authentication</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Auth Type</label>
+                        <select x-model="tool.auth_type"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="none">No Authentication</option>
+                            <option value="api_key">API Key</option>
+                            <option value="bearer">Bearer Token</option>
+                            <option value="basic">Basic Auth</option>
+                        </select>
+                    </div>
+
+                    <!-- API Key Auth -->
+                    <div x-show="tool.auth_type === 'api_key'" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Header Name</label>
+                            <input type="text" 
+                                   x-model="tool.auth_config.key"
+                                   placeholder="X-API-Key"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input type="password" 
+                                   x-model="tool.auth_config.value"
+                                   placeholder="Your API key"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Bearer Token Auth -->
+                    <div x-show="tool.auth_type === 'bearer'">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bearer Token</label>
+                        <input type="password" 
+                               x-model="tool.auth_config.token"
+                               placeholder="Your bearer token"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Basic Auth -->
+                    <div x-show="tool.auth_type === 'basic'" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                            <input type="text" 
+                                   x-model="tool.auth_config.username"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input type="password" 
+                                   x-model="tool.auth_config.password"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Parameters -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <span class="text-xl">4️⃣</span>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900">Input Parameters</h2>
+                    </div>
+                    <button @click="addParameter()"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                        + Add Parameter
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="(param, index) in tool.parameters" :key="index">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="grid grid-cols-12 gap-3">
+                                <div class="col-span-3">
+                                    <input type="text" 
+                                           x-model="param.name"
+                                           placeholder="Parameter name"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                </div>
+                                <div class="col-span-2">
+                                    <select x-model="param.type"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="string">String</option>
+                                        <option value="integer">Integer</option>
+                                        <option value="float">Float</option>
+                                        <option value="boolean">Boolean</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-5">
+                                    <input type="text" 
+                                           x-model="param.description"
+                                           placeholder="Description"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                </div>
+                                <div class="col-span-2 flex items-center gap-2">
+                                    <label class="flex items-center text-sm">
+                                        <input type="checkbox" 
+                                               x-model="param.required"
+                                               class="mr-1">
+                                        Required
+                                    </label>
+                                    <button @click="tool.parameters.splice(index, 1)"
+                                            class="text-red-600 hover:text-red-800">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="tool.parameters.length === 0" class="text-center py-8 text-gray-500">
+                        <p>No parameters yet. Click "Add Parameter" to get started.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Request Body (for POST/PUT) -->
+            <div x-show="['POST', 'PUT', 'PATCH'].includes(tool.http_method)" 
+                 class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">5️⃣</span>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Request Body Template</h2>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">JSON Body Template</label>
+                    <textarea x-model="tool.request_body_template"
+                              rows="6"
+                              placeholder='{\n  "query": "{{city}}",\n  "units": "{{units}}"\n}'
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Use <code class="bg-gray-100 px-1 py-0.5 rounded">{{parameter_name}}</code> syntax to insert parameter values
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Test & Preview -->
+        <div class="space-y-6">
+            
+            <!-- Live Preview -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Tool Preview</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl" x-text="tool.icon || '🔧'"></span>
+                        <div>
+                            <div class="font-semibold text-gray-900" x-text="tool.name || 'Untitled Tool'"></div>
+                            <div class="text-sm text-gray-600" x-text="tool.description || 'No description'"></div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Method:</span>
+                            <span class="font-mono font-semibold" x-text="tool.http_method"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Auth:</span>
+                            <span class="capitalize" x-text="tool.auth_type"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Parameters:</span>
+                            <span x-text="tool.parameters.length"></span>
+                        </div>
+                    </div>
+
+                    <div x-show="tool.endpoint_url" class="border-t border-gray-200 pt-4">
+                        <div class="text-xs text-gray-600 mb-1">Endpoint:</div>
+                        <div class="text-xs font-mono bg-gray-50 p-2 rounded break-all" x-text="tool.endpoint_url"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Section -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🧪 Test Your Tool</h3>
+                
+                <div class="space-y-3">
+                    <template x-for="param in tool.parameters" :key="param.name">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                <span x-text="param.name"></span>
+                                <span x-show="param.required" class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   x-model="testParams[param.name]"
+                                   :placeholder="param.description"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </template>
+
+                    <button @click="testTool()" 
+                            :disabled="!tool.endpoint_url"
+                            class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 font-medium">
+                        Run Test
+                    </button>
+                </div>
+
+                <!-- Test Results -->
+                <div x-show="testResult" class="mt-4 border-t border-green-200 pt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">Test Result:</span>
+                        <span :class="testResult.success ? 'text-green-600' : 'text-red-600'" 
+                              class="text-sm font-bold">
+                            <span x-text="testResult.success ? '✓ Success' : '✗ Failed'"></span>
+                        </span>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 text-xs font-mono max-h-48 overflow-auto">
+                        <pre x-text="JSON.stringify(testResult, null, 2)"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 Quick Tips</h3>
+                <ul class="space-y-2 text-sm text-blue-800">
+                    <li class="flex items-start gap-2">
+                        <span>✓</span>
+                        <span>Test your tool before saving</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span>✓</span>
+                        <span>Use clear parameter names</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span>✓</span>
+                        <span>Add helpful descriptions</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span>✓</span>
+                        <span>Mark required parameters</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toolBuilder() {
+    return {
+        tool: {
+            name: '',
+            description: '',
+            icon: '🔧',
+            category: '',
+            http_method: 'GET',
+            endpoint_url: '',
+            auth_type: 'none',
+            auth_config: {},
+            headers: {},
+            parameters: [],
+            request_body_template: ''
+        },
+        testParams: {},
+        testResult: null,
+
+        addParameter() {
+            this.tool.parameters.push({
+                name: '',
+                type: 'string',
+                description: '',
+                required: true
+            });
+        },
+
+        async testTool() {
+            if (!this.tool.endpoint_url) {
+                alert('Please enter an endpoint URL');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/custom-tools/test/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        tool: this.tool,
+                        parameters: this.testParams
+                    })
+                });
+
+                this.testResult = await response.json();
+            } catch (error) {
+                this.testResult = {
+                    success: false,
+                    error: error.message
+                };
+            }
+        },
+
+        async saveTool() {
+            if (!this.tool.name || !this.tool.endpoint_url) {
+                alert('Please fill in required fields (name and endpoint URL)');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/custom-tools/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(this.tool)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Tool saved successfully!');
+                    window.location.href = '/agents/custom-tools/';
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving tool: ' + error.message);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

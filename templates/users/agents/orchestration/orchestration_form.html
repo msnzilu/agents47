@@ -5,46 +5,46 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
     <!-- Header -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
+    <div class="mb-6 sm:mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
                     {% if object %}
-                        Edit Orchestration
+                    Edit Orchestration
                     {% else %}
-                        Create New Orchestration
+                    Create New Orchestration
                     {% endif %}
                 </h1>
-                <p class="text-gray-600 mt-1">Configure multi-agent workflow coordination</p>
+                <p class="text-sm sm:text-base text-gray-600 mt-1">Configure multi-agent workflow coordination</p>
             </div>
-            <a href="{% url 'agents:orchestration-list' %}" 
-               class="text-gray-600 hover:text-gray-900 font-medium">
+            <a href="{% url 'agents:orchestration-list' %}"
+               class="inline-flex items-center justify-center sm:justify-start text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base">
                 ← Back to List
             </a>
         </div>
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <form method="post" id="orchestrationForm">
             {% csrf_token %}
-            
+
             <!-- Name -->
             <div class="mb-6">
                 <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                     Orchestration Name *
                 </label>
-                <input type="text" 
-                       name="{{ form.name.name }}" 
+                <input type="text"
+                       name="{{ form.name.name }}"
                        id="{{ form.name.id_for_label }}"
                        value="{{ form.name.value|default:'' }}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       class="w-full px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                        placeholder="e.g., Customer Support Team, Research Pipeline"
                        required>
                 {% if form.name.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
                 {% endif %}
                 <p class="mt-1 text-xs text-gray-500">{{ form.name.help_text }}</p>
             </div>
@@ -54,20 +54,19 @@
                 <label for="{{ form.orchestrator_agent.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                     Orchestrator Agent *
                 </label>
-                <select name="{{ form.orchestrator_agent.name }}" 
+                <select name="{{ form.orchestrator_agent.name }}"
                         id="{{ form.orchestrator_agent.id_for_label }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         required>
                     <option value="">Select orchestrator agent...</option>
                     {% for agent in form.orchestrator_agent.field.queryset %}
-                        <option value="{{ agent.id }}" 
-                                {% if form.orchestrator_agent.value == agent.id|stringformat:"s" %}selected{% endif %}>
-                            {{ agent.name }} ({{ agent.get_use_case_display }})
-                        </option>
+                    <option value="{{ agent.id }}" {% if form.orchestrator_agent.value == agent.id|stringformat:"s" %}selected{% endif %}>
+                        {{ agent.name }} ({{ agent.get_use_case_display }})
+                    </option>
                     {% endfor %}
                 </select>
                 {% if form.orchestrator_agent.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.orchestrator_agent.errors.0 }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ form.orchestrator_agent.errors.0 }}</p>
                 {% endif %}
                 <p class="mt-1 text-xs text-gray-500">The main agent that coordinates the workflow</p>
             </div>
@@ -77,38 +76,52 @@
                 <label for="{{ form.strategy.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                     Orchestration Strategy *
                 </label>
-                <select name="{{ form.strategy.name }}" 
+                <select name="{{ form.strategy.name }}"
                         id="{{ form.strategy.id_for_label }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="w-full px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                         required>
                     {% for value, label in form.strategy.field.choices %}
-                        <option value="{{ value }}" 
-                                {% if form.strategy.value == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
+                    <option value="{{ value }}" {% if form.strategy.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
                     {% endfor %}
                 </select>
                 {% if form.strategy.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.strategy.errors.0 }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ form.strategy.errors.0 }}</p>
                 {% endif %}
-                
+
                 <!-- Strategy Descriptions -->
-                <div class="mt-3 space-y-2 text-xs text-gray-600">
-                    <div class="flex items-start">
-                        <span class="font-semibold min-w-[110px]">Sequential:</span>
-                        <span>Agents execute one after another in order</span>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="font-semibold min-w-[110px]">Parallel:</span>
-                        <span>Multiple agents work simultaneously</span>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="font-semibold min-w-[110px]">Conditional:</span>
-                        <span>Agents execute based on conditions</span>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="font-semibold min-w-[110px]">Hierarchical:</span>
-                        <span>Agents organized in a tree structure</span>
+                <div class="mt-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-700 mb-2.5">Strategy Options:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="flex items-start space-x-2">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></span>
+                            <div>
+                                <span class="font-semibold text-xs sm:text-sm text-gray-900">Sequential:</span>
+                                <span class="text-xs sm:text-sm text-gray-600"> Agents execute one after another in order</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0"></span>
+                            <div>
+                                <span class="font-semibold text-xs sm:text-sm text-gray-900">Parallel:</span>
+                                <span class="text-xs sm:text-sm text-gray-600"> Multiple agents work simultaneously</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0"></span>
+                            <div>
+                                <span class="font-semibold text-xs sm:text-sm text-gray-900">Conditional:</span>
+                                <span class="text-xs sm:text-sm text-gray-600"> Agents execute based on conditions</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></span>
+                            <div>
+                                <span class="font-semibold text-xs sm:text-sm text-gray-900">Hierarchical:</span>
+                                <span class="text-xs sm:text-sm text-gray-600"> Agents organized in a tree structure</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,18 +131,18 @@
                 <label for="{{ form.workflow_config.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                     Workflow Configuration
                 </label>
-                <textarea name="{{ form.workflow_config.name }}" 
+                <textarea name="{{ form.workflow_config.name }}"
                           id="{{ form.workflow_config.id_for_label }}"
                           rows="12"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-xs sm:text-sm"
                           placeholder='{"steps": [], "synthesis_strategy": "summarize", "max_parallel_agents": 3}'>{{ form.workflow_config.value|default:'{"steps": [], "synthesis_strategy": "summarize", "max_parallel_agents": 3}' }}</textarea>
                 {% if form.workflow_config.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.workflow_config.errors.0 }}</p>
+                <p class="mt-1 text-sm text-red-600">{{ form.workflow_config.errors.0 }}</p>
                 {% endif %}
                 <p class="mt-1 text-xs text-gray-500">JSON configuration for workflow steps and execution</p>
-                
+
                 <!-- Sample Configuration -->
-                <div class="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="mt-3 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p class="text-xs font-semibold text-blue-900 mb-2">Sample Configuration:</p>
                     <pre class="text-xs text-blue-800 overflow-x-auto"><code>{
   "steps": [
@@ -150,29 +163,29 @@
             <!-- Is Active (only for edit) -->
             <div class="mb-6">
                 <label class="flex items-center">
-                    <input type="checkbox" 
-                           name="is_active" 
+                    <input type="checkbox"
+                           name="is_active"
                            id="id_is_active"
                            {% if form.is_active.value %}checked{% endif %}
-                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                           class="w-5 h-5 sm:w-4 sm:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                     <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
                 </label>
-                <p class="mt-1 text-xs text-gray-500 ml-6">Enable this orchestration for execution</p>
+                <p class="mt-1 text-xs text-gray-500 ml-7 sm:ml-6">Enable this orchestration for execution</p>
             </div>
             {% endif %}
 
             <!-- Form Actions -->
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="{% url 'agents:orchestration-list' %}" 
-                   class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'agents:orchestration-list' %}"
+                   class="w-full sm:w-auto px-6 py-2.5 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-center">
                     Cancel
                 </a>
-                <button type="submit" 
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                <button type="submit"
+                        class="w-full sm:w-auto px-6 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                     {% if object %}
-                        Update Orchestration
+                    Update Orchestration
                     {% else %}
-                        Create Orchestration
+                    Create Orchestration
                     {% endif %}
                 </button>
             </div>
@@ -180,9 +193,9 @@
     </div>
 
     <!-- Help Section -->
-    <div class="mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 Creating Orchestrations</h3>
-        <div class="space-y-3 text-sm text-blue-800">
+    <div class="mt-6 sm:mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-blue-900 mb-3">💡 Creating Orchestrations</h3>
+        <div class="space-y-2 sm:space-y-3 text-xs sm:text-sm text-blue-800">
             <p>
                 <strong>Step 1:</strong> Create the orchestration with a name and select the orchestrator agent.
             </p>
@@ -196,7 +209,7 @@
                 <strong>Step 4:</strong> Test your orchestration before activating it.
             </p>
         </div>
-        
+
         <div class="mt-4 pt-4 border-t border-blue-200">
             <p class="text-xs font-semibold text-blue-900 mb-2">Quick Tips:</p>
             <ul class="space-y-1 text-xs text-blue-700">
@@ -210,9 +223,9 @@
 
     <!-- Available Agents Info (for create view) -->
     {% if not object and user_agents %}
-    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Available Agents</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-4">Your Available Agents</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {% for agent in user_agents %}
             <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -220,9 +233,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                 </div>
-                <div class="ml-3">
-                    <p class="text-sm font-semibold text-gray-900">{{ agent.name }}</p>
-                    <p class="text-xs text-gray-500">{{ agent.get_use_case_display }}</p>
+                <div class="ml-3 min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ agent.name }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ agent.get_use_case_display }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -235,7 +248,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-format JSON in workflow config
     const workflowField = document.getElementById('{{ form.workflow_config.id_for_label }}');
-    
+
     if (workflowField) {
         workflowField.addEventListener('blur', function() {
             try {
@@ -246,12 +259,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Form validation
     const form = document.getElementById('orchestrationForm');
     form.addEventListener('submit', function(e) {
         const workflowValue = workflowField.value.trim();
-        
+
         if (workflowValue) {
             try {
                 JSON.parse(workflowValue);

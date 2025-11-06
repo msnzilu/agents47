@@ -6,13 +6,13 @@
 <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">💰 Marketplace Dashboard</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">💰 Marketplace Dashboard</h1>
                 <p class="text-gray-600 mt-1">Manage your agent listings and track sales</p>
             </div>
-            <a href="{% url 'agents:marketplace-publish' %}" 
-               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium inline-flex items-center gap-2 shadow-lg">
+            <a href="{% url 'agents:marketplace-publish' %}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium inline-flex items-center gap-2 shadow-lg whitespace-nowrap">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -21,62 +21,62 @@
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Stats Grid - 2 columns on mobile, 4 on desktop -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <!-- Total Listings -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-500">Total</span>
+                <span class="text-xs sm:text-sm font-medium text-gray-500">Total</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900">{{ total_listings }}</div>
-            <p class="text-sm text-gray-600 mt-1">Active Listings</p>
+            <div class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_listings }}</div>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1">Active Listings</p>
         </div>
 
         <!-- Total Sales -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-500">Sales</span>
+                <span class="text-xs sm:text-sm font-medium text-gray-500">Sales</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900">{{ total_sales }}</div>
-            <p class="text-sm text-green-600 mt-1">+{{ sales_this_month }} this month</p>
+            <div class="text-2xl sm:text-3xl font-bold text-gray-900">{{ total_sales }}</div>
+            <p class="text-xs sm:text-sm text-green-600 mt-1">+{{ sales_this_month }} this month</p>
         </div>
 
         <!-- Total Revenue -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-500">Revenue</span>
+                <span class="text-xs sm:text-sm font-medium text-gray-500">Revenue</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900">${{ total_revenue|floatformat:0 }}</div>
-            <p class="text-sm text-purple-600 mt-1">${{ revenue_this_month|floatformat:0 }} this month</p>
+            <div class="text-2xl sm:text-3xl font-bold text-gray-900">${{ total_revenue|floatformat:0 }}</div>
+            <p class="text-xs sm:text-sm text-purple-600 mt-1">${{ revenue_this_month|floatformat:0 }} this month</p>
         </div>
 
         <!-- Average Rating -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-500">Rating</span>
+                <span class="text-xs sm:text-sm font-medium text-gray-500">Rating</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900">{{ average_rating|floatformat:1 }}</div>
-            <p class="text-sm text-gray-600 mt-1">{{ total_reviews }} reviews</p>
+            <div class="text-2xl sm:text-3xl font-bold text-gray-900">{{ average_rating|floatformat:1 }}</div>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1">{{ total_reviews }} reviews</p>
         </div>
     </div>
 
@@ -84,7 +84,7 @@
     <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6 mb-8">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="{% url 'agents:marketplace-publish' %}" 
+            <a href="{% url 'agents:marketplace-publish' %}"
                class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +97,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'agents:marketplace-home' %}" 
+            <a href="{% url 'agents:marketplace-home' %}"
                class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'agents:marketplace-my-installations' %}" 
+            <a href="{% url 'agents:marketplace-my-installations' %}"
                class="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition border border-gray-200">
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,13 +211,13 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 {% if listing.status == 'approved' %}
-                                <a href="{% url 'agents:marketplace-agent-detail' listing.id %}" 
+                                <a href="{% url 'agents:marketplace-agent-detail' listing.id %}"
                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                    title="View Listing">
                                     View
                                 </a>
                                 {% endif %}
-                                <a href="{% url 'agents:marketplace-update-listing' listing.id %}" 
+                                <a href="{% url 'agents:marketplace-update-listing' listing.id %}"
                                    class="text-gray-600 hover:text-gray-800 text-sm font-medium"
                                    title="Edit">
                                     Edit
@@ -245,13 +245,13 @@
             </div>
             <div class="flex gap-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" 
+                <a href="?page={{ page_obj.previous_page_number }}"
                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
                     Previous
                 </a>
                 {% endif %}
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" 
+                <a href="?page={{ page_obj.next_page_number }}"
                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
                     Next
                 </a>
@@ -269,7 +269,7 @@
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No listings yet</h3>
             <p class="text-gray-600 mb-6">Start selling your AI agents on the marketplace</p>
-            <a href="{% url 'agents:marketplace-publish' %}" 
+            <a href="{% url 'agents:marketplace-publish' %}"
                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>

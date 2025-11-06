@@ -74,6 +74,7 @@ urlpatterns = [
     path('marketplace/', marketplace.MarketplaceHomeView.as_view(), name='marketplace-home'),
     path('marketplace/agent/<int:pk>/', marketplace.MarketplaceAgentDetailView.as_view(), name='marketplace-agent-detail'),
     path('marketplace/category/<str:category>/', marketplace.MarketplaceCategoryView.as_view(), name='marketplace-category'),
+    path('marketplace/listing/<int:pk>/delete/', marketplace.DeleteListingView.as_view(), name='marketplace-delete-listing'),
 
     # =================================== Tool Builder Urls ======================================================================
     path('custom-tools/', tool_builder.CustomToolListView.as_view(), name='custom-tools-list'),

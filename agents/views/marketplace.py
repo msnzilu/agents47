@@ -3,7 +3,7 @@ Agent Marketplace Views - Phase 11
 Location: agents/views/marketplace.py
 """
 
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.shortcuts import redirect, get_object_or_404
@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.db.models import Q, Avg, Count
 from django.db import models
+from django.http import HttpResponseForbidden
 from agents.models import (
     Agent,
     MarketplaceAgent,
@@ -563,3 +564,84 @@ class MarketplaceCategoryView(ListView):
         context['category'] = self.category
         context['category_display'] = dict(MarketplaceAgent.Category.choices).get(self.category)
         return context
+
+
+class DeleteListingView(LoginRequiredMixin, DeleteView):
+        """
+        Delete a marketplace listing
+        Only the publisher can delete their listing
+        """
+        model = MarketplaceAgent
+        template_name = 'users/agents/marketplace/listing_confirm_delete.html'
+        success_url = reverse_lazy('agents:marketplace-my-listings')
+        context_object_name = 'listing'
+    
+        def get_queryset(self):
+            """Ensure user can only delete their own listings"""
+            return MarketplaceAgent.objects.filter(publisher=self.request.user)
+    
+        def dispatch(self, request, *args, **kwargs):
+            """Check if user is the publisher"""
+            listing = self.get_object()
+            if listing.publisher != request.user:
+                messages.error(request, "You can only delete your own listings.")
+                return HttpResponseForbidden("You don't have permission to delete this listing.")
+            return super().dispatch(request, *args, **kwargs)
+    
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            listing = self.object
+        
+            # Get statistics about this listing
+            context['total_installations'] = AgentInstallation.objects.filter(
+                marketplace_agent=listing
+            ).count()
+        
+            context['active_installations'] = AgentInstallation.objects.filter(
+                marketplace_agent=listing,
+                is_active=True
+            ).count()
+        
+            context['total_reviews'] = listing.reviews.count()
+        
+            # Warning message based on installations
+            if context['active_installations'] > 0:
+                context['has_active_users'] = True
+                context['warning_message'] = (
+                    f"This listing has {context['active_installations']} active installation(s). "
+                    f"Deleting it will affect users who have installed this agent."
+                )
+        
+            return context
+    
+        def delete(self, request, *args, **kwargs):
+            """Override delete to add custom logic"""
+            listing = self.get_object()
+            listing_name = listing.name
+        
+            # Check if there are active installations
+            active_installations = AgentInstallation.objects.filter(
+                marketplace_agent=listing,
+                is_active=True
+            ).count()
+        
+            if active_installations > 0:
+                messages.warning(
+                    request,
+                    f'Listing "{listing_name}" has been deleted. '
+                    f'{active_installations} user(s) will no longer receive updates.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'Listing "{listing_name}" has been successfully deleted.'
+                )
+        
+            # Note: The associated Agent model is NOT deleted
+            # Only the marketplace listing is removed
+        
+            return super().delete(request, *args, **kwargs)
+    
+        def get_success_url(self):
+            """Redirect to my listings page"""
+            return reverse_lazy('agents:marketplace-my-listings')

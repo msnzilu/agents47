@@ -49,7 +49,7 @@ services:
       redis:
         condition: service_healthy
     env_file:
-        - .env.example
+        - .env
 
   celery:
     build:

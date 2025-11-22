@@ -1,6 +1,6 @@
-.env.loca/
+.env.local
 .venv/
 .htaccess
-.env
+.env/
 .env.example
 .vs/

@@ -1,0 +1,114 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Two-Factor Verification - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center bg-gray-50 py-4 px-4 sm:px-2 lg:px-8">
+    <div class="max-w-md w-full space-y-4 sm:space-y-2">
+        <!-- Header -->
+        <div class="text-center">
+            <div class="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="h-10 w-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">
+                Two-Factor Authentication
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Enter the verification code from your authenticator app
+            </p>
+        </div>
+
+        <!-- 2FA Verification Form -->
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-2">
+            <form method="post" id="verify-form" class="space-y-6">
+                {% csrf_token %}
+
+                <div>
+                    <label for="id_token" class="block text-sm font-medium text-gray-700 mb-2">
+                        Verification Code
+                    </label>
+                    {{ form.token }}
+                    <p class="mt-2 text-xs text-gray-500">
+                        Enter the 6-digit code from your authenticator app
+                    </p>
+                    {% if form.token.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.token.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {{ form.use_backup }}
+
+                <div class="flex gap-3">
+                    <button type="submit"
+                        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Verify
+                    </button>
+                    <button type="button" onclick="showBackupCodeInput()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm">
+                        Use Backup Code
+                    </button>
+                </div>
+            </form>
+
+            <!-- Cancel Option -->
+            <div class="mt-6 text-center border-t border-gray-200 pt-6">
+                <form method="post" action="{% url 'users:login_2fa_cancel' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-sm text-gray-600 hover:text-gray-900">
+                        ← Return to Login
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Text -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <svg class="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clip-rule="evenodd" />
+                </svg>
+                <div class="text-sm text-blue-800">
+                    <p class="font-medium mb-1">Lost access to your authenticator?</p>
+                    <p>Use one of your backup codes instead, or contact support for assistance.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showBackupCodeInput() {
+        const tokenInput = document.getElementById('id_token');
+        const useBackupInput = document.getElementById('id_use_backup');
+
+        // Update placeholder and help text
+        tokenInput.placeholder = 'XXXXXXXX';
+        tokenInput.maxLength = 8;
+
+        const helpText = tokenInput.parentElement.querySelector('.text-xs');
+        helpText.textContent = 'Enter one of your 8-character backup codes';
+
+        // Mark as backup code
+        useBackupInput.value = 'true';
+
+        // Focus the input
+        tokenInput.focus();
+    }
+
+    // Auto-submit when 6 digits entered
+    document.getElementById('id_token').addEventListener('input', function (e) {
+        const value = e.target.value.replace(/\D/g, '');
+        if (value.length === 6) {
+            // Auto-submit after a brief delay
+            setTimeout(() => {
+                document.getElementById('verify-form').submit();
+            }, 300);
+        }
+    });
+</script>
+{% endblock %}

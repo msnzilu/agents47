@@ -5,29 +5,26 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ======== ENVIRONMENT ========
 env = environ.Env(
     DEBUG=(bool, False)
 )
-
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# ================== SECRET KEY ==================
 SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# ================== DEBUG ==================
 DEBUG = env('DEBUG')
 SITE_NAME = env('SITE_NAME')
 SITE_DOMAIN=env('SITE_DOMAIN')
 
+# ================== ALLOWED HOSTS ==================
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
-# ALLOWED_HOSTS = ['agents47.online', 'www.agents47.online']
-
 LOGIN_URL = '/users/login/'
 
+# ================================== SECURITY ==============================
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -39,16 +36,11 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     
-# CSRF trusted origins
-# CSRF_TRUSTED_ORIGINS = [
-#     'https://agents47.online',
-#     'https://www.agents47.online',
-# ]
-# CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+# ================== CSRF TRUSTED ORIGINS ==================
 CSRF_TRUSTED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 
-# Application definition
 
+# ===================== APPLICATION DEFINITION ===============
 INSTALLED_APPS = [
 
     # ===Default=======
@@ -83,7 +75,7 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-
+# ================================== MIDDLEWARE ==============================
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
@@ -104,6 +96,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'aiagentplatform.urls'
 
+
+
+# ================================== TEMPLATES ==============================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -124,34 +119,15 @@ WSGI_APPLICATION = 'aiagentplatform.wsgi.application'
 ASGI_APPLICATION = 'aiagentplatform.asgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# ================================== DATABASE ==========================
 import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+        default=env('DATABASE_URL', default='sqlite:///db.sqlite3')
     )
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': env('DB_NAME'),
-#         'USER': env('DB_USER'),
-#         'PASSWORD': env('DB_PASSWORD'),
-#         'HOST': env('DB_HOST', default='127.0.0.1'),
-#         'PORT': env('DB_PORT', default='3306'),
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#             'charset': 'utf8mb4',
-#         },
-#     }
-# }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
+# ================================== PASSWORD VALIDATION ==========================
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -175,9 +151,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
+# ============= INTERNATIONALIZATION ================================
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -187,9 +161,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+# ==================== STATIC FILES ====================
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -197,9 +169,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
+# ==================== DEFAULT PRIMARY KEY FIELD TYPE ====================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ======= CELERY CONFIGURATIONS ======================
@@ -211,6 +181,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 
+# ==================== CHANNEL LAYERS ====================
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',

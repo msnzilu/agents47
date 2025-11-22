@@ -16,11 +16,11 @@ from chat.consumers import ChatConsumer
 User = get_user_model()
 
 
-@pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 class TestStreaming:
     """Test streaming response functionality"""
     
+    @pytest.mark.asyncio
     async def test_agent_streams_response_tokens(self):
         """Test that agent responses are streamed token by token"""
         # Setup
@@ -98,6 +98,7 @@ class TestStreaming:
         # Cleanup
         await communicator.disconnect()
     
+    @pytest.mark.asyncio
     async def test_streaming_handles_long_responses(self):
         """Test streaming with long responses (multiple tokens)"""
         # Setup
@@ -171,6 +172,7 @@ class TestStreaming:
         # Cleanup
         await communicator.disconnect()
     
+    @pytest.mark.asyncio
     async def test_streaming_error_stops_gracefully(self):
         """Test that streaming errors are handled gracefully"""
         # Setup
@@ -240,6 +242,7 @@ class TestStreaming:
         # Cleanup
         await communicator.disconnect()
     
+    @pytest.mark.asyncio
     async def test_concurrent_streams_isolated(self):
         """Test that multiple concurrent streams don't interfere"""
         # Setup
@@ -324,6 +327,7 @@ class TestStreaming:
         await comm1.disconnect()
         await comm2.disconnect()
     
+    @pytest.mark.asyncio
     async def test_streaming_can_be_interrupted(self):
         """Test that disconnecting during streaming stops gracefully"""
         # Setup
@@ -385,11 +389,11 @@ class TestStreaming:
         # (No assertion needed - just shouldn't raise exception)
 
 
-@pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 class TestStreamingPerformance:
     """Test streaming performance and reliability"""
     
+    @pytest.mark.asyncio
     async def test_streaming_maintains_order(self):
         """Test that tokens are received in order"""
         # Setup
@@ -461,6 +465,7 @@ class TestStreamingPerformance:
         # Cleanup
         await communicator.disconnect()
     
+    @pytest.mark.asyncio
     async def test_streaming_completes_within_timeout(self):
         """Test that streaming completes in reasonable time"""
         import time

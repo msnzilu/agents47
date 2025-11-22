@@ -10,7 +10,9 @@ urlpatterns = [
     # Authentication
     path('register/', views.RegisterView.as_view(), name='register'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('logout/', views.CustomLogoutView.as_view(), name='logout'),
+    path('login/2fa/', views.Login2FAVerifyView.as_view(), name='login_2fa_verify'),
+    path('login/2fa/cancel/', views.login_2fa_cancel, name='login_2fa_cancel'),
+    path('logout/', views.custom_logout, name='logout'),
 
     path('contact/', views.contact_view, name='contact'),
     path('contact/submit/', views.contact_submit, name='contact_submit'),

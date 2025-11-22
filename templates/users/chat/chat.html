@@ -10,6 +10,7 @@
         align-items: center;
         padding: 8px 12px;
     }
+
     .typing-indicator span {
         height: 8px;
         width: 8px;
@@ -19,58 +20,94 @@
         margin: 0 2px;
         animation: typing 1.4s infinite;
     }
+
     .typing-indicator span:nth-child(2) {
         animation-delay: 0.2s;
     }
+
     .typing-indicator span:nth-child(3) {
         animation-delay: 0.4s;
     }
+
     @keyframes typing {
-        0%, 60%, 100% {
+
+        0%,
+        60%,
+        100% {
             transform: translateY(0);
             opacity: 0.7;
         }
+
         30% {
             transform: translateY(-10px);
             opacity: 1;
         }
     }
+
     .message-fade-in {
         animation: fadeIn 0.3s ease-in;
     }
+
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
+
     /* Streaming message styles */
     .streaming-message {
         position: relative;
     }
+
     .streaming-message::after {
         content: '▋';
         animation: blink 1s infinite;
         margin-left: 2px;
     }
+
     @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0; }
+
+        0%,
+        50% {
+            opacity: 1;
+        }
+
+        51%,
+        100% {
+            opacity: 0;
+        }
     }
-    
+
     /* Connection status colors */
     .status-connected {
         background-color: #10b981;
     }
+
     .status-disconnected {
         background-color: #ef4444;
     }
+
     .status-reconnecting {
         background-color: #f59e0b;
         animation: pulse 2s infinite;
     }
+
     @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
     }
 </style>
 {% endblock %}
@@ -83,13 +120,13 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <h2 class="text-lg font-semibold mb-3">Conversations</h2>
                 <div class="space-y-2">
-                    <a href="?conversation=new" 
-                       class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                    <a href="?conversation=new"
+                        class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
                         + New Conversation
                     </a>
                     {% for conv in user_conversations %}
-                    <a href="?conversation={{ conv.id }}" 
-                       class="block p-3 rounded-lg hover:bg-gray-50 transition {% if conv.id == conversation.id %}bg-blue-50 border-l-4 border-blue-600{% endif %}">
+                    <a href="?conversation={{ conv.id }}"
+                        class="block p-3 rounded-lg hover:bg-gray-50 transition {% if conv.id == conversation.id %}bg-blue-50 border-l-4 border-blue-600{% endif %}">
                         <div class="text-sm font-medium text-gray-900 truncate">{{ conv.title }}</div>
                         <div class="text-xs text-gray-500">{{ conv.updated_at|timesince }} ago</div>
                     </a>
@@ -104,10 +141,10 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <a href="{% url 'agents:agent_detail' agent.id %}" 
-                           class="text-blue-600 hover:text-blue-800">
+                        <a href="{% url 'agents:agent_detail' agent.id %}" class="text-blue-600 hover:text-blue-800">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7"></path>
                             </svg>
                         </a>
                         <div>
@@ -116,13 +153,17 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <span id="connection-status" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        <span id="connection-status"
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                             <span id="status-dot" class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>
                             <span id="status-text">Connecting...</span>
                         </span>
-                        <button onclick="clearMessages()" class="text-gray-500 hover:text-gray-700" title="Clear messages">
+                        <button onclick="clearMessages()" class="text-gray-500 hover:text-gray-700"
+                            title="Clear messages">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
                             </svg>
                         </button>
                     </div>
@@ -130,39 +171,46 @@
             </div>
 
             <!-- Chat Container -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col" style="height: calc(100vh - 280px);">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col"
+                style="height: calc(100vh - 280px);">
                 <!-- Messages Area -->
                 <div class="flex-1 overflow-y-auto p-6 space-y-4" id="messages-container">
                     {% if messages.object_list %}
-                        {% for message in messages.object_list reversed %}
-                        <div class="message-item flex {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}" data-message-id="{{ message.id }}">
-                            <div class="max-w-[70%]">
-                                <div class="{% if message.user == request.user %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-900{% endif %} rounded-lg px-4 py-3">
-                                    <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
-                                </div>
-                                <div class="flex items-center mt-1 {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}">
-                                    <p class="text-xs text-gray-500">
-                                        {{ message.created_at|date:"g:i A" }}
-                                    </p>
-                                    {% if message.user == request.user %}
-                                    <span class="ml-2 text-xs text-gray-400" id="status-{{ message.id }}">
-                                        ✓
-                                    </span>
-                                    {% endif %}
-                                </div>
+                    {% for message in messages.object_list reversed %}
+                    <div class="message-item flex {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}"
+                        data-message-id="{{ message.id }}">
+                        <div class="max-w-[70%]">
+                            <div
+                                class="{% if message.user == request.user %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-900{% endif %} rounded-lg px-4 py-3">
+                                <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+                            </div>
+                            <div
+                                class="flex items-center mt-1 {% if message.user == request.user %}justify-end{% else %}justify-start{% endif %}">
+                                <p class="text-xs text-gray-500">
+                                    {{ message.created_at|date:"g:i A" }}
+                                </p>
+                                {% if message.user == request.user %}
+                                <span class="ml-2 text-xs text-gray-400" id="status-{{ message.id }}">
+                                    ✓
+                                </span>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
+                    </div>
+                    {% endfor %}
                     {% else %}
-                        <div id="empty-state" class="text-center text-gray-500 py-12">
-                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                            </svg>
-                            <p class="text-lg font-medium">Start a conversation</p>
-                            <p class="text-sm mt-1">Send a message to begin chatting with {{ agent.name }}</p>
-                        </div>
+                    <div id="empty-state" class="text-center text-gray-500 py-12">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                            </path>
+                        </svg>
+                        <p class="text-lg font-medium">Start a conversation</p>
+                        <p class="text-sm mt-1">Send a message to begin chatting with {{ agent.name }}</p>
+                    </div>
                     {% endif %}
-                    
+
                     <!-- Typing Indicator (hidden by default) -->
                     <div id="typing-indicator" class="hidden flex justify-start">
                         <div class="bg-gray-100 rounded-lg px-4 py-2">
@@ -178,8 +226,8 @@
                 <!-- Pagination if needed -->
                 {% if messages.has_other_pages %}
                 <div class="border-t border-gray-200 px-4 py-2 text-center">
-                    <a href="?conversation={{ conversation.id }}&page={{ messages.previous_page_number }}" 
-                       class="text-sm text-blue-600 hover:underline">
+                    <a href="?conversation={{ conversation.id }}&page={{ messages.previous_page_number }}"
+                        class="text-sm text-blue-600 hover:underline">
                         Load earlier messages
                     </a>
                 </div>
@@ -190,34 +238,28 @@
                     {% if not can_send_messages %}
                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                         <p class="text-sm text-yellow-800">
-                            <strong>Notice:</strong> This agent is currently inactive. Messages cannot be sent at this time.
+                            <strong>Notice:</strong> This agent is currently inactive. Messages cannot be sent at this
+                            time.
                         </p>
                     </div>
                     {% endif %}
-                    
+
                     <form id="message-form" class="flex space-x-3">
                         {% csrf_token %}
                         <div class="flex-1 relative">
-                            <textarea 
-                                id="message-input"
-                                name="content" 
-                                placeholder="Type your message..." 
-                                rows="1"
+                            <textarea id="message-input" name="content" placeholder="Type your message..." rows="1"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                {% if not can_send_messages %}disabled{% endif %}
-                            ></textarea>
+                                {% if not can_send_messages %}disabled{% endif %}></textarea>
                             <span class="absolute bottom-2 right-2 text-xs text-gray-400">
                                 <span id="char-count">0</span>/5000
                             </span>
                         </div>
-                        <button 
-                            type="submit" 
-                            id="send-button"
+                        <button type="submit" id="send-button"
                             class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            {% if not can_send_messages %}disabled{% endif %}
-                        >
+                            {% if not can_send_messages %}disabled{% endif %}>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                             </svg>
                         </button>
                     </form>
@@ -236,21 +278,21 @@
     // Configuration
     const conversationId = {{ conversation.id }};
     const currentUser = '{{ request.user.email }}';
-    
+
     console.log('clearMessages defined, type:', typeof clearMessages);
-    
+
     // Make it globally accessible (just to be sure)
     window.clearMessages = clearMessages;
     console.log('window.clearMessages:', typeof window.clearMessages);
-    
+
     // Initialize WebSocket Manager
     let wsManager = null;
     let typingTimeout = null;
-    
+
     // Initialize WebSocket
     function initWebSocket() {
         console.log('[Chat] Initializing WebSocket for conversation:', conversationId);
-        
+
         wsManager = new WebSocketManager(conversationId, {
             onConnect: handleConnect,
             onDisconnect: handleDisconnect,
@@ -261,26 +303,26 @@
             onTyping: handleTyping,
             onError: handleError
         });
-        
+
         wsManager.connect();
     }
-    
+
     // Handle connection
     function handleConnect() {
         console.log('[Chat] Connected to WebSocket');
         updateConnectionStatus('connected', 'Connected');
     }
-    
+
     // Handle disconnection
     function handleDisconnect(event) {
         console.log('[Chat] Disconnected from WebSocket');
         updateConnectionStatus('disconnected', 'Disconnected');
     }
-    
+
     // Handle incoming messages
     function handleMessage(data) {
         console.log('[Chat] Message received:', data);
-        
+
         if (data.type === 'message') {
             const isCurrentUser = data.message.user_id === '{{ request.user.id }}';
             addMessageToChat(data.message, isCurrentUser);
@@ -288,25 +330,25 @@
             updateMessageStatus(data.temp_id, data.message_id);
         }
     }
-    
+
     // Handle stream start
     function handleStreamStart(data) {
         console.log('[Chat] Stream starting:', data.message_id);
         hideTypingIndicator();
         createStreamingMessage(data.message_id);
     }
-    
+
     // Handle stream token
     function handleStreamToken(data) {
         updateStreamingMessage(data.message_id, data.accumulated);
     }
-    
+
     // Handle stream end
     function handleStreamEnd(data) {
         console.log('[Chat] Stream ended:', data.message_id);
         finalizeStreamingMessage(data.message_id, data.timestamp);
     }
-    
+
     // Handle typing indicator
     function handleTyping(data) {
         if (data.type === 'agent_typing') {
@@ -317,19 +359,19 @@
             }
         }
     }
-    
+
     // Handle errors
     function handleError(error) {
         console.error('[Chat] WebSocket error:', error);
     }
-    
+
     // Update connection status UI
     function updateConnectionStatus(status, text) {
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-        
+
         statusDot.className = 'w-2 h-2 rounded-full mr-2';
-        
+
         if (status === 'connected') {
             statusDot.classList.add('status-connected');
         } else if (status === 'disconnected') {
@@ -337,25 +379,25 @@
         } else if (status === 'reconnecting' || status === 'connecting') {
             statusDot.classList.add('status-reconnecting');
         }
-        
+
         statusText.textContent = text;
     }
-    
+
     // Add message to chat UI
     function addMessageToChat(message, isCurrentUser) {
         const messagesContainer = document.getElementById('messages-container');
         const emptyState = document.getElementById('empty-state');
-        
+
         if (emptyState) {
             emptyState.remove();
         }
-        
+
         const messageDiv = document.createElement('div');
         messageDiv.className = `message-item message-fade-in flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`;
         messageDiv.dataset.messageId = message.id || Date.now();
-        
+
         const timestamp = message.created_at ? formatTimestamp(message.created_at) : 'Just now';
-        
+
         messageDiv.innerHTML = `
             <div class="max-w-[70%]">
                 <div class="${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-3">
@@ -367,20 +409,20 @@
                 </div>
             </div>
         `;
-        
+
         messagesContainer.appendChild(messageDiv);
         scrollToBottom();
     }
-    
+
     // Create streaming message placeholder
     function createStreamingMessage(messageId) {
         const messagesContainer = document.getElementById('messages-container');
-        
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message-item message-fade-in flex justify-start';
         messageDiv.id = `streaming-${messageId}`;
         messageDiv.dataset.messageId = messageId;
-        
+
         messageDiv.innerHTML = `
             <div class="max-w-[70%]">
                 <div class="bg-gray-100 text-gray-900 rounded-lg px-4 py-3">
@@ -391,11 +433,11 @@
                 </div>
             </div>
         `;
-        
+
         messagesContainer.appendChild(messageDiv);
         scrollToBottom();
     }
-    
+
     // Update streaming message
     function updateStreamingMessage(messageId, content) {
         const contentElement = document.getElementById(`stream-content-${messageId}`);
@@ -404,7 +446,7 @@
             scrollToBottom();
         }
     }
-    
+
     // Finalize streaming message
     function finalizeStreamingMessage(messageId, timestamp) {
         const messageDiv = document.getElementById(`streaming-${messageId}`);
@@ -413,66 +455,66 @@
             if (contentElement) {
                 contentElement.classList.remove('streaming-message');
             }
-            
+
             const timeElement = messageDiv.querySelector('.text-xs.text-gray-500');
             if (timeElement) {
                 timeElement.textContent = formatTimestamp(timestamp);
             }
         }
     }
-    
+
     // Show/hide typing indicator
     function showTypingIndicator() {
         const indicator = document.getElementById('typing-indicator');
         indicator.classList.remove('hidden');
         scrollToBottom();
     }
-    
+
     function hideTypingIndicator() {
         const indicator = document.getElementById('typing-indicator');
         indicator.classList.add('hidden');
     }
-    
+
     // Handle message form submission
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
     const charCount = document.getElementById('char-count');
-    
+
     // Auto-resize textarea
-    messageInput.addEventListener('input', function() {
+    messageInput.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         charCount.textContent = this.value.length;
-        
+
         // Send typing indicator
         if (wsManager && wsManager.isConnected() && this.value.trim()) {
             if (typingTimeout) clearTimeout(typingTimeout);
-            
+
             wsManager.sendTyping(true);
-            
+
             typingTimeout = setTimeout(() => {
                 wsManager.sendTyping(false);
             }, 1000);
         }
     });
-    
+
     // Form submission
-    messageForm.addEventListener('submit', function(e) {
+    messageForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        
+
         const content = messageInput.value.trim();
         if (!content) return;
-        
+
         if (content.length > 5000) {
             alert('Message is too long (max 5000 characters)');
             return;
         }
-        
+
         // Send via WebSocket
         if (wsManager && wsManager.isConnected()) {
             const tempId = 'temp-' + Date.now();
             wsManager.sendMessage(content, tempId);
-            
+
             // Clear input
             messageInput.value = '';
             messageInput.style.height = 'auto';
@@ -481,35 +523,35 @@
             alert('Not connected to server. Please wait...');
         }
     });
-    
+
     // Utility functions
     function scrollToBottom() {
         const messagesContainer = document.getElementById('messages-container');
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
+
     function formatTimestamp(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit', 
-            hour12: true 
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
         });
     }
-    
+
     function updateMessageStatus(tempId, messageId) {
         const tempMessage = document.querySelector(`[data-message-id="${tempId}"]`);
         if (tempMessage) {
             tempMessage.dataset.messageId = messageId;
         }
     }
-    
+
     // // Clear messages
     function clearMessages() {
         if (confirm('Are you sure you want to clear all messages from this view?')) {
@@ -525,17 +567,17 @@
             `;
         }
     }
-    
+
     // Handle Enter key
-    messageInput.addEventListener('keydown', function(e) {
+    messageInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             messageForm.dispatchEvent(new Event('submit'));
         }
     });
-    
+
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         scrollToBottom();
         initWebSocket();
 
@@ -546,9 +588,9 @@
             clearBtn.addEventListener('click', clearMessages);
         }
     });
-    
+
     // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
+    window.addEventListener('beforeunload', function () {
         if (wsManager) {
             wsManager.disconnect();
         }

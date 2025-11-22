@@ -1,6 +1,5 @@
 """
 Enhanced WebSocket Consumer for Real-Time Chat with Streaming
-Phase 4: Real-Time Chat & WebSockets
 """
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
@@ -10,6 +9,8 @@ import json
 import logging
 import asyncio
 from datetime import datetime
+from agents.agents import AgentFactory
+from agents.models import Agent
 
 logger = logging.getLogger(__name__)
 
@@ -102,77 +103,98 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.handle_delete_message(content)
             
             elif message_type == 'ping':
-                await self.send_json({'type': 'pong'})
+                await self.handle_ping()
             
             else:
-                logger.warning(f"Unknown message type: {message_type}")
                 await self.send_error(f"Unknown message type: {message_type}")
-        
+                
         except Exception as e:
-            logger.error(f"Error in receive_json: {str(e)}", exc_info=True)
-            await self.send_error("Internal server error")
+            logger.error(f"Error handling message: {str(e)}", exc_info=True)
+            await self.send_error(f"Error processing message: {str(e)}")
     
     async def handle_chat_message(self, content):
-        """Handle user chat message"""
+        """Handle incoming chat message from user"""
         message_content = content.get('message', '').strip()
         temp_id = content.get('temp_id')
         
         if not message_content:
-            await self.send_error("Message content is required", temp_id=temp_id)
-            return
-        
-        if len(message_content) > 5000:
-            await self.send_error("Message too long (max 5000 characters)", temp_id=temp_id)
+            await self.send_error("Empty message", temp_id)
             return
         
         try:
             # Save user message to database
-            message = await self.save_message(message_content)
+            saved_message = await self.save_message(message_content)
             
-            if not message:
-                await self.send_error("Failed to save message", temp_id=temp_id)
+            if not saved_message:
+                await self.send_error("Failed to save message", temp_id)
                 return
             
-            # Send confirmation to sender
-            await self.send_json({
-                'type': 'message_sent',
-                'temp_id': temp_id,
-                'message_id': message['id'],
-                'timestamp': message['created_at']
-            })
-            
-            # Broadcast message to room group
+            # Broadcast user message to all clients in the room
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'chat_message',
                     'message': {
-                        'id': message['id'],
-                        'content': message_content,
+                        'id': saved_message['id'],
+                        'temp_id': temp_id,
                         'role': 'user',
+                        'content': message_content,
                         'user_id': str(self.user.id),
                         'username': self.user.username,
-                        'created_at': message['created_at']
+                        'timestamp': saved_message['created_at']
                     }
                 }
             )
             
-            # Trigger agent response with streaming
-            asyncio.create_task(self.generate_agent_response(message['id']))
-        
+            # Get agent info and generate response
+            await self.generate_agent_response(message_content)
+            
         except Exception as e:
             logger.error(f"Error handling chat message: {str(e)}", exc_info=True)
-            await self.send_error("Failed to process message", temp_id=temp_id)
+            await self.send_error(f"Failed to process message: {str(e)}", temp_id)
     
-    async def generate_agent_response(self, user_message_id: int):
+    async def generate_agent_response(self, user_message: str):
         """
-        Generate streaming agent response
+        Generate and stream agent response using AgentFactory.
         
-        This integrates with your Phase 3 LangChain agents for real streaming.
-        For now, it includes a simulation that you can replace with actual LLM calls.
+        This method:
+        1. Retrieves the Agent model
+        2. Creates a LangChain agent using AgentFactory
+        3. Executes the agent to get a real LLM response
+        4. Simulates streaming by sending the response token-by-token
         """
+        agent_dict = None
+        
         try:
-            # Notify that agent is typing
+            # Get agent info from database
+            agent_model = await self.get_agent_model()
+            if not agent_model:
+                await self.send_error("Agent not found")
+                return
+            
+            if not agent_model.is_active:
+                await self.send_error("Agent is not active")
+                return
+            
+            # Create placeholder assistant message
+            assistant_message = await self.create_assistant_message()
+            if not assistant_message:
+                await self.send_error("Failed to create assistant message")
+                return
+            
+            message_id = assistant_message['id']
+            
+            # Notify clients that streaming is starting
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'message_stream_start',
+                    'message_id': message_id,
+                    'timestamp': assistant_message['created_at']
+                }
+            )
+            
+            # Send agent typing indicator
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -181,75 +203,110 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
             
-            # Get agent and conversation context
-            agent_info = await self.get_agent_info()
-            
-            if not agent_info or not agent_info.get('is_active'):
-                logger.warning(f"Agent not active for conversation {self.conversation_id}")
+            try:
+                # Create LangChain agent using AgentFactory
+                logger.info(f"Creating agent instance for {agent_model.name}")
+                agent_dict = await self.run_sync(
+                    AgentFactory.create_agent,
+                    agent_model
+                )
+                
+                # Execute agent to get response
+                logger.info(f"Executing agent for message: {user_message[:50]}...")
+                result = await AgentFactory.execute_agent_async(agent_dict, user_message)
+                
+                if not result.get('success', False):
+                    error_msg = result.get('error', 'Unknown error occurred')
+                    logger.error(f"Agent execution failed: {error_msg}")
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'agent_error',
+                            'error': f"Failed to generate response: {error_msg}"
+                        }
+                    )
+                    return
+                
+                # Extract response and metadata
+                response_text = result.get('response', '')
+                sources = result.get('sources', [])
+                phase6_results = result.get('phase6_results', {})
+                
+                logger.info(f"Agent response received: {len(response_text)} characters")
+                
+                # Simulate streaming by sending tokens
+                accumulated_content = ""
+                token_index = 0
+                
+                # Split response into tokens (words + punctuation)
+                # This simulates streaming since AgentFactory returns complete response
+                words = response_text.split()
+                
+                for word in words:
+                    token = word + " "
+                    accumulated_content += token
+                    token_index += 1
+                    
+                    # Send token to all clients
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'message_stream_token',
+                            'message_id': message_id,
+                            'token': token,
+                            'accumulated': accumulated_content.strip(),
+                            'index': token_index
+                        }
+                    )
+                    
+                    # Small delay to simulate streaming
+                    await asyncio.sleep(0.05)
+                
+                # Update database with final content and metadata
+                metadata = {
+                    'streaming': False,
+                    'sources': sources,
+                    'phase6_results': phase6_results
+                }
+                await self.update_assistant_message(
+                    message_id, 
+                    accumulated_content.strip(),
+                    metadata
+                )
+                
+                logger.info(f"Agent response complete. Sources: {len(sources)}, "
+                          f"Phase6 results: {list(phase6_results.keys())}")
+                
+            except ValueError as ve:
+                # Handle configuration errors (missing API keys, etc.)
+                error_msg = str(ve)
+                logger.error(f"Agent configuration error: {error_msg}")
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        'type': 'agent_typing',
-                        'is_typing': False
+                        'type': 'agent_error',
+                        'error': f"Configuration error: {error_msg}. Please check your agent's LLM integration settings."
+                    }
+                )
+                return
+                
+            except Exception as e:
+                logger.error(f"Error executing agent: {str(e)}", exc_info=True)
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'agent_error',
+                        'error': f"Agent execution error: {str(e)}"
                     }
                 )
                 return
             
-            conversation_history = await self.get_conversation_history()
-            
-            # Create assistant message placeholder
-            assistant_message = await self.create_assistant_message()
-            
-            # Notify streaming started
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'message_stream_start',
-                    'message_id': assistant_message['id'],
-                    'timestamp': assistant_message['created_at']
-                }
-            )
-            
-            # Call LLM with streaming
-            # TODO: Replace this with your Phase 3 LangChain streaming integration
-            full_response = await self.call_llm_streaming(
-                agent_info,
-                conversation_history,
-                assistant_message['id']
-            )
-            
-            # Update message with full content
-            await self.update_assistant_message(assistant_message['id'], full_response)
-            
-            # Notify streaming complete
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'message_stream_end',
-                    'message_id': assistant_message['id'],
-                    'timestamp': datetime.utcnow().isoformat()
-                }
-            )
-            
-            # Stop typing indicator
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'agent_typing',
-                    'is_typing': False
-                }
-            )
-        
         except Exception as e:
-            logger.error(f"Error generating agent response: {str(e)}", exc_info=True)
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'agent_error',
-                    'error': 'Failed to generate response'
-                }
-            )
-            # Stop typing indicator
+            logger.error(f"Error in generate_agent_response: {str(e)}", exc_info=True)
+            await self.send_error(f"Failed to generate response: {str(e)}")
+            
+        finally:
+            # Always stop agent typing indicator
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -257,62 +314,28 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'is_typing': False
                 }
             )
+            
+            # Notify clients that streaming ended
+            if assistant_message:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'message_stream_end',
+                        'message_id': assistant_message['id'],
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                )
     
-    async def call_llm_streaming(self, agent_info: dict, history: list, message_id: int) -> str:
-        """
-        Call LLM with streaming support.
-        
-        TODO: Replace this simulation with actual LangChain streaming from Phase 3.
-        
-        For real integration, use:
-        from agents.agents import execute_agent_streaming
-        
-        return await execute_agent_streaming(
-            agent=agent,
-            user_message=last_message,
-            conversation_history=history,
-            channel_layer=self.channel_layer,
-            room_group_name=self.room_group_name,
-            message_id=message_id
-        )
-        """
-        # Simulated streaming response for demonstration
-        response_text = (
-            f"Hello! I'm {agent_info['name']}, your AI assistant. "
-            "I understand your message and I'm here to help you. "
-            "This is a streaming response that demonstrates real-time token delivery. "
-            "In production, this would be powered by your Phase 3 LangChain agents."
-        )
-        
-        # Stream tokens word by word
-        words = response_text.split()
-        accumulated_text = ""
-        
-        for i, word in enumerate(words):
-            accumulated_text += word + " "
-            
-            # Send token to all clients in the room
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'message_stream_token',
-                    'message_id': message_id,
-                    'token': word + " ",
-                    'accumulated': accumulated_text.strip(),
-                    'index': i
-                }
-            )
-            
-            # Simulate network delay
-            await asyncio.sleep(0.05)
-        
-        return accumulated_text.strip()
+    async def run_sync(self, func, *args, **kwargs):
+        """Run a synchronous function in a thread pool"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, func, *args, **kwargs)
     
     async def handle_typing(self, content):
-        """Handle typing indicator"""
+        """Handle typing indicator from user"""
         is_typing = content.get('is_typing', False)
         
-        # Broadcast typing indicator to room (other users will filter themselves out)
+        # Broadcast typing indicator to other users
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -348,7 +371,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.send_error("Failed to edit message")
     
     async def handle_delete_message(self, content):
-        """Handle message deletion"""
+        """Handle message deletion request"""
         message_id = content.get('message_id')
         
         if not message_id:
@@ -368,6 +391,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             )
         else:
             await self.send_error("Failed to delete message")
+    
+    async def handle_ping(self):
+        """Handle ping request for keep-alive"""
+        await self.send_json({
+            'type': 'pong',
+            'timestamp': datetime.utcnow().isoformat()
+        })
     
     # Group message handlers (called by channel_layer.group_send)
     
@@ -472,6 +502,24 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return False
     
     @database_sync_to_async
+    def get_agent_model(self):
+        """Get the Agent model instance for this conversation"""
+        from chat.models import Conversation
+        
+        try:
+            conversation = Conversation.objects.select_related('agent').get(
+                id=self.conversation_id,
+                user=self.user
+            )
+            return conversation.agent
+        except Conversation.DoesNotExist:
+            logger.error(f"Conversation {self.conversation_id} not found")
+            return None
+        except Exception as e:
+            logger.error(f"Error getting agent model: {str(e)}", exc_info=True)
+            return None
+    
+    @database_sync_to_async
     def save_message(self, content: str):
         """Save user message to database"""
         from chat.models import Message, Conversation
@@ -532,38 +580,25 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return None
     
     @database_sync_to_async
-    def update_assistant_message(self, message_id: int, content: str) -> bool:
-        """Update assistant message with full content"""
+    def update_assistant_message(self, message_id: int, content: str, metadata: dict = None) -> bool:
+        """Update assistant message with full content and metadata"""
         from chat.models import Message
         
         try:
             message = Message.objects.get(id=message_id)
             message.content = content
-            message.metadata['streaming'] = False
+            
+            # Update metadata
+            if metadata:
+                message.metadata.update(metadata)
+            else:
+                message.metadata['streaming'] = False
+            
             message.save(update_fields=['content', 'metadata'])
             return True
         except Exception as e:
             logger.error(f"Error updating assistant message: {str(e)}", exc_info=True)
             return False
-    
-    @database_sync_to_async
-    def get_agent_info(self):
-        """Get agent information"""
-        from chat.models import Conversation
-        
-        try:
-            conversation = Conversation.objects.select_related('agent').get(id=self.conversation_id)
-            agent = conversation.agent
-            
-            return {
-                'id': agent.id,
-                'name': agent.name,
-                'use_case': agent.use_case,
-                'is_active': agent.is_active
-            }
-        except Exception as e:
-            logger.error(f"Error getting agent info: {str(e)}", exc_info=True)
-            return None
     
     @database_sync_to_async
     def get_conversation_history(self, limit: int = 10):

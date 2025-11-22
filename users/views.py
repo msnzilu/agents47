@@ -19,11 +19,16 @@ from django.views.generic import CreateView, UpdateView, TemplateView
 from django.db.models import Count, Q
 from django.utils import timezone
 from django.conf import settings
+from django.contrib.auth import login, authenticate
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
 from .forms import (
     CustomUserCreationForm, CustomAuthenticationForm, 
-    CustomPasswordResetForm, UserProfileForm
+    CustomPasswordResetForm, UserProfileForm, CustomAuthenticationForm, TwoFactorVerifyForm
 )
-
+from django.utils.decorators import method_decorator
+from security.models import LoginAttempt
+from django.views import View
 User = get_user_model()
 
 def contact_view(request):
@@ -129,9 +134,31 @@ class RegisterView(CreateView):
         return super().form_invalid(form)
 
 
+# class CustomLoginView(LoginView):
+#     """
+#     Custom login view using email.
+#     """
+#     template_name = 'users/auth/login.html'
+#     form_class = CustomAuthenticationForm
+#     redirect_authenticated_user = True
+    
+#     def get_success_url(self):
+#         """Redirect to dashboard after login."""
+#         return reverse_lazy('users:dashboard')
+    
+#     def form_valid(self, form):
+#         """Handle successful login."""
+#         messages.success(self.request, f'Welcome back, {form.get_user().get_display_name()}!')
+#         return super().form_valid(form)
+    
+#     def form_invalid(self, form):
+#         """Handle invalid login."""
+#         messages.error(self.request, 'Invalid email or password.')
+#         return super().form_invalid(form)
+
 class CustomLoginView(LoginView):
     """
-    Custom login view using email.
+    Custom login view with 2FA support and attempt tracking.
     """
     template_name = 'users/auth/login.html'
     form_class = CustomAuthenticationForm
@@ -141,24 +168,218 @@ class CustomLoginView(LoginView):
         """Redirect to dashboard after login."""
         return reverse_lazy('users:dashboard')
     
+    def get_client_ip(self):
+        """Get client IP address."""
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = self.request.META.get('REMOTE_ADDR')
+        return ip
+    
     def form_valid(self, form):
-        """Handle successful login."""
-        messages.success(self.request, f'Welcome back, {form.get_user().get_display_name()}!')
+        """Handle successful login - check if 2FA is enabled."""
+        user = form.get_user()
+        email = user.email
+        ip_address = self.get_client_ip()
+        user_agent = self.request.META.get('HTTP_USER_AGENT', '')[:255]
+        
+        # Check if account is locked
+        if LoginAttempt.is_account_locked(email):
+            LoginAttempt.record_attempt(
+                email=email,
+                ip_address=ip_address,
+                success=False,
+                user_agent=user_agent,
+                failure_reason='Account locked'
+            )
+            messages.error(
+                self.request,
+                'Account temporarily locked due to multiple failed login attempts. '
+                'Please try again later or reset your password.'
+            )
+            return redirect('users:login')
+        
+        # Check if user has 2FA enabled
+        if hasattr(user, 'two_factor_auth') and user.two_factor_auth.is_enabled:
+            # Store user info in session for 2FA verification
+            self.request.session['pre_2fa_user_id'] = user.id
+            self.request.session['pre_2fa_user_email'] = email
+            self.request.session['pre_2fa_backend'] = user.backend
+            self.request.session['pre_2fa_ip'] = ip_address
+            self.request.session['pre_2fa_user_agent'] = user_agent
+            
+            # Redirect to 2FA verification page
+            return redirect('users:login_2fa_verify')
+        
+        # No 2FA - record successful login and complete
+        LoginAttempt.record_attempt(
+            email=email,
+            ip_address=ip_address,
+            success=True,
+            user_agent=user_agent
+        )
+        
+        messages.success(self.request, f'Welcome back, {user.get_display_name()}!')
         return super().form_valid(form)
     
     def form_invalid(self, form):
         """Handle invalid login."""
-        messages.error(self.request, 'Invalid email or password.')
+        email = form.data.get('username', '')  # username field contains email
+        if email:
+            ip_address = self.get_client_ip()
+            user_agent = self.request.META.get('HTTP_USER_AGENT', '')[:255]
+            
+            LoginAttempt.record_attempt(
+                email=email,
+                ip_address=ip_address,
+                success=False,
+                user_agent=user_agent,
+                failure_reason='Invalid credentials'
+            )
+            
+            # Check if account should be locked
+            if LoginAttempt.is_account_locked(email):
+                messages.error(
+                    self.request,
+                    'Too many failed login attempts. Your account has been temporarily locked. '
+                    'Please try again in 30 minutes or reset your password.'
+                )
+            else:
+                remaining = 5 - LoginAttempt.get_recent_failures(email)
+                messages.error(
+                    self.request,
+                    f'Invalid email or password. {remaining} attempts remaining before lockout.'
+                )
+        else:
+            messages.error(self.request, 'Invalid email or password.')
+        
         return super().form_invalid(form)
 
 
-class CustomLogoutView(LogoutView):
-    next_page = reverse_lazy('home')
-
+@method_decorator(never_cache, name='dispatch')
+class Login2FAVerifyView(View):
+    """
+    View to verify 2FA token during login.
+    """
+    template_name = 'users/auth/login_2fa_verify.html'
+    
     def dispatch(self, request, *args, **kwargs):
+        # Check if user is already authenticated
         if request.user.is_authenticated:
-            messages.success(request, 'You have been logged out successfully.')
+            return redirect('users:dashboard')
+        
+        # Check if we have a pending 2FA verification
+        if 'pre_2fa_user_id' not in request.session:
+            messages.error(request, 'Invalid 2FA verification session.')
+            return redirect('users:login')
+        
         return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request):
+        from .forms import TwoFactorVerifyForm
+        form = TwoFactorVerifyForm()
+        return render(request, self.template_name, {'form': form})
+    
+    def post(self, request):
+        from .forms import TwoFactorVerifyForm
+        from django.contrib.auth import get_user_model
+        
+        form = TwoFactorVerifyForm(request.POST)
+        
+        if not form.is_valid():
+            messages.error(request, 'Please enter a valid verification code.')
+            return render(request, self.template_name, {'form': form})
+        
+        # Get the user from session
+        User = get_user_model()
+        user_id = request.session.get('pre_2fa_user_id')
+        email = request.session.get('pre_2fa_user_email')
+        ip_address = request.session.get('pre_2fa_ip')
+        user_agent = request.session.get('pre_2fa_user_agent', '')
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            messages.error(request, 'Invalid verification session.')
+            return redirect('users:login')
+        
+        # Verify the token
+        token = form.cleaned_data['token']
+        use_backup = form.cleaned_data.get('use_backup', False)
+        
+        if use_backup:
+            # Verify backup code
+            is_valid = user.two_factor_auth.verify_backup_code(token)
+            code_type = 'backup code'
+        else:
+            # Verify TOTP token
+            is_valid = user.two_factor_auth.verify_token(token)
+            code_type = '2FA token'
+        
+        if not is_valid:
+            # Record failed 2FA attempt
+            LoginAttempt.record_attempt(
+                email=email,
+                ip_address=ip_address,
+                success=False,
+                user_agent=user_agent,
+                failure_reason=f'Invalid {code_type}'
+            )
+            
+            messages.error(request, 'Invalid verification code. Please try again.')
+            return render(request, self.template_name, {'form': form})
+        
+        # Token is valid - record successful login
+        LoginAttempt.record_attempt(
+            email=email,
+            ip_address=ip_address,
+            success=True,
+            user_agent=user_agent
+        )
+        
+        # Complete the login
+        backend = request.session.get('pre_2fa_backend')
+        user.backend = backend
+        login(request, user)
+        
+        # Clean up session
+        for key in ['pre_2fa_user_id', 'pre_2fa_user_email', 'pre_2fa_backend', 
+                    'pre_2fa_ip', 'pre_2fa_user_agent']:
+            request.session.pop(key, None)
+        
+        if use_backup:
+            messages.warning(
+                request,
+                'Backup code used successfully. You have fewer backup codes remaining.'
+            )
+        
+        messages.success(request, f'Welcome back, {user.get_display_name()}!')
+        return redirect('users:dashboard')
+
+
+@require_POST
+def login_2fa_cancel(request):
+    """Cancel 2FA verification and return to login."""
+    if 'pre_2fa_user_id' in request.session:
+        del request.session['pre_2fa_user_id']
+    if 'pre_2fa_backend' in request.session:
+        del request.session['pre_2fa_backend']
+    
+    messages.info(request, 'Login cancelled.')
+    return redirect('users:login')
+
+
+@login_required
+def custom_logout(request):
+    """
+    Custom logout view that handles both GET and POST requests.
+    """
+    if request.user.is_authenticated:
+        messages.success(request, 'You have been logged out successfully.')
+        logout(request)
+    
+    return redirect('home') 
 
 
 

@@ -157,3 +157,37 @@ class UserProfileForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
             }),
         }
+        
+class TwoFactorVerifyForm(forms.Form):
+    """Form to verify 2FA token during login"""
+    
+    token = forms.CharField(
+        label='Verification Code',
+        max_length=8,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+            'placeholder': '000000',
+            'autocomplete': 'off',
+            'autofocus': True,
+            'pattern': '[0-9A-Fa-f]*',
+            'maxlength': '8',
+        }),
+        help_text='Enter the 6-digit code from your authenticator app, or an 8-character backup code.'
+    )
+    
+    use_backup = forms.BooleanField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    
+    def clean_token(self):
+        token = self.cleaned_data['token'].strip().replace(' ', '').replace('-', '')
+        
+        # Check if it's a 6-digit TOTP code or 8-character backup code
+        if len(token) == 6 and token.isdigit():
+            return token
+        elif len(token) == 8 and all(c in '0123456789ABCDEFabcdef' for c in token):
+            self.cleaned_data['use_backup'] = True
+            return token.upper()
+        
+        raise forms.ValidationError('Invalid code format. Enter a 6-digit code or 8-character backup code.')
